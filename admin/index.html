@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel BBF — SJ Imóveis</title>
+<title>Painel BBF — Empresas SJ</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -152,7 +152,6 @@ tr.row-main:hover{background:var(--bg)}
 <div id="screen-login">
   <div class="login-card">
     <div class="login-head">
-      <div class="login-logo">SJ</div>
       <div>
         <div class="login-title">Painel BBF — Acesso restrito</div>
         <div class="login-sub">Básico Bem Feito · Empresas SJ</div>
@@ -176,7 +175,6 @@ tr.row-main:hover{background:var(--bg)}
 <div id="screen-app">
   <div class="hdr">
     <div class="hdr-brand">
-      <div class="hdr-logo">SJ</div>
       <div>
         <div class="hdr-title">Painel BBF</div>
         <div class="hdr-sub">Básico Bem Feito · 1º Semestre 2026</div>
@@ -194,12 +192,14 @@ tr.row-main:hover{background:var(--bg)}
     <div class="tabs">
       <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</div>
       <div class="tab" data-tab="dataset" onclick="switchTab('dataset')">Dados</div>
+      <div class="tab" data-tab="sessoes" onclick="switchTab('sessoes')">Sessões de resposta</div>
     </div>
 
     <div id="loading" class="loading-wrap"><div class="spin"></div> Carregando respostas…</div>
 
     <div id="tab-dashboard" class="tab-panel active"></div>
     <div id="tab-dataset" class="tab-panel"></div>
+    <div id="tab-sessoes" class="tab-panel"></div>
   </div>
 </div>
 
@@ -211,13 +211,30 @@ const SUPABASE_URL = 'https://zwcclbtemxtefdtuylhs.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3Y2NsYnRlbXh0ZWZkdHV5bGhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjY2NzYsImV4cCI6MjA5OTEwMjY3Nn0.aKAaTcQwg3Yta-DPm7yd4m61xFaBshjZlZBhNEvfN3E';
 const SESSION_KEY = 'bbf_admin_session';
 
-const EMPRESA_NOMES = { sj:'SJ Imóveis', readi:'READI', adv:'SJ Advogados', vg:'Verdegreen', iua:'iu-á Hotel', cadis:'CADIS 3' };
+const EMPRESA_NOMES = { sj:'Empresas SJ', readi:'READI', adv:'SJ Advogados', vg:'Verdegreen', iua:'iu-á Hotel', cadis:'CADIS 3' };
 const NIVEL_INFO = {
   1:{label:'Abaixo do Básico', color:'#DC2626', bg:'#FEE2E2'},
   2:{label:'Em Construção',    color:'#D97706', bg:'#FEF3C7'},
   3:{label:'Básico Realizado', color:'#2563EB', bg:'#DBEAFE'},
   4:{label:'Básico Consolidado', color:'#7C3AED', bg:'#F5F3FF'},
   5:{label:'Além do Básico',   color:'#16A34A', bg:'#DCFCE7'},
+};
+const NIVEL_ANCHORS = {
+  1:'Processos essenciais com falhas recorrentes; não há padrão de execução definido; erros impactam clientes e outras UGBs com frequência. A área apaga incêndio, não entrega.',
+  2:'O básico existe, mas a execução é instável. Depende de quem está de plantão ou do contexto do dia. Ainda há lacunas visíveis e o resultado varia entre pessoas ou períodos.',
+  3:'Os processos essenciais funcionam com regularidade. A equipe sabe o que precisa fazer e entrega na maior parte das vezes, com exceções pontuais gerenciáveis.',
+  4:'Execução consistente e previsível. Exceções são tratadas rapidamente. A equipe opera com autonomia e alinhamento. Qualquer pessoa substitui qualquer pessoa sem perda de padrão.',
+  5:'O básico está tão consolidado que a área opera com autonomia total e consistência independente de quem está presente. Os padrões são conhecidos, respeitados e executados sem necessidade de controle externo.',
+};
+
+// Universo oficial de UGBs por empresa (extraído dos indicadores da pesquisa) — usado para medir aderência
+const UGB_UNIVERSE = {
+  "sj": ["Apoio a clientes","Arquivo","Atendimento a Inquilino - Contratos","Atendimento a Inquilino - Imóveis","Concessionárias","Condomínio","Crédito e Contrato","Desocupação","Embalagem","Estoque","Gerência Administrativa","Gerência de Atendimento","Gerência de Contas","IMDEX","IPTU","Locação SJ Morar","Locação SJ Negócios","Novos Clientes","Relacionamento","Seguro Incêndio","Vistoria"],
+  "readi": ["Cuido de Clientes","Cuido de Docs","Cuido de Finanças","Cuido de Licenças","Cuido de Precificação","Cuido de Produtos","Cuido de Regularização","Cuido de Tech"],
+  "adv": ["Administrativo","Assessoria Jurídica","Contencioso","Controladoria","Negociações"],
+  "vg": ["Contabilidade","Controladoria - VG","Coord. Receita e Distribuição","Cozinha","Departamento de Pessoal","Financeiro","Gente e Gestão","Gerência de Vendas","Governança","Grupos e Eventos","Manutenção","Marketing","Recepção","Reservas","Restaurante","Suprimentos","TI"],
+  "iua": ["Almoxarifado","Contabilidade","Controladoria - IU-Á","Cozinha","Eventos","Financeiro","Gente e Gestão","Gerência","Governança","Manutenção","Marketing","Recepção","Reservas","Restaurante","Setor Pessoal","T.I. IU-Á"],
+  "cadis": ["Contabilidade","Financeiro","Gente e Gestão","Gepa","Marketing","Secretária da Direção","Setor Pessoal","Tecnologia e Inovação"]
 };
 
 let session = null;      // {access_token, refresh_token, expires_at, email}
@@ -227,6 +244,28 @@ let currentTab = 'dashboard';
 let expandedRows = new Set();
 
 const filterState = { empresa:new Set(), ugb:new Set(), nivel:new Set(), pessoa:'' };
+
+// ══════════════════════════════════════════
+// ADERÊNCIA
+// ══════════════════════════════════════════
+function computeAdherence(){
+  const empresasEscopo = filterState.empresa.size ? [...filterState.empresa] : Object.keys(UGB_UNIVERSE);
+  const respondidos = new Set(
+    allRows
+      .filter(r => empresasEscopo.includes(r.empresa))
+      .map(r => `${r.empresa}||${r.ugb}`)
+  );
+  const porEmpresa = empresasEscopo.map(emp => {
+    const universo = (UGB_UNIVERSE[emp]||[]);
+    const universoEscopo = filterState.ugb.size ? universo.filter(u=>filterState.ugb.has(u)) : universo;
+    const pendentes = universoEscopo.filter(u => !respondidos.has(`${emp}||${u}`));
+    const respondidasCount = universoEscopo.length - pendentes.length;
+    return { empresa: emp, total: universoEscopo.length, respondidas: respondidasCount, pendentes };
+  });
+  const totalUniverso = porEmpresa.reduce((s,e)=>s+e.total,0);
+  const totalRespondidas = porEmpresa.reduce((s,e)=>s+e.respondidas,0);
+  return { totalUniverso, totalRespondidas, porEmpresa };
+}
 
 // ══════════════════════════════════════════
 // AUTH
@@ -459,12 +498,23 @@ function switchTab(tab){
   renderCurrentTab();
 }
 function renderCurrentTab(){
-  if(currentTab==='dashboard') renderDashboard(); else renderDataset();
+  if(currentTab==='dashboard') renderDashboard();
+  else if(currentTab==='dataset') renderDataset();
+  else renderSessoes();
 }
 
 // ══════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════
+function toArrayField(v){
+  if(Array.isArray(v)) return v;
+  if(typeof v === 'string'){
+    try{ const p = JSON.parse(v); return Array.isArray(p) ? p : (v?[v]:[]); }
+    catch(e){ return v ? [v] : []; }
+  }
+  return [];
+}
+
 function freqCount(list){
   const m = new Map();
   list.forEach(v=>{ if(!v) return; m.set(v, (m.get(v)||0)+1); });
@@ -487,13 +537,22 @@ function barChart(rows, colorMap, opts={}){
 
 function renderDashboard(){
   const host = document.getElementById('tab-dashboard');
-  if(!filtered.length){
-    host.innerHTML = `<div class="card"><div class="empty-note">Nenhuma resposta encontrada para os filtros selecionados.</div></div>`;
+
+  const ader = computeAdherence();
+  const aderPct = ader.totalUniverso ? Math.round(ader.totalRespondidas/ader.totalUniverso*100) : 0;
+
+  if(!filtered.length && !ader.totalRespondidas){
+    host.innerHTML = `
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Aderência da pesquisa</div>
+        ${renderAderenciaBlock(ader, aderPct)}
+      </div>
+      <div class="card"><div class="empty-note">Nenhuma resposta registrada ainda para os filtros selecionados.</div></div>`;
     return;
   }
 
   const total = filtered.length;
-  const avgNivel = (filtered.reduce((s,r)=>s+(r.nivel_entrega||0),0)/total).toFixed(1);
+  const avgNivel = total ? (filtered.reduce((s,r)=>s+(r.nivel_entrega||0),0)/total).toFixed(1) : '—';
   const nEmpresas = new Set(filtered.map(r=>r.empresa)).size;
   const nUgbs = new Set(filtered.map(r=>r.ugb)).size;
 
@@ -503,18 +562,23 @@ function renderDashboard(){
   const empresaCounts = freqCount(filtered.map(r=>EMPRESA_NOMES[r.empresa]||r.empresa));
   const ugbCounts = freqCount(filtered.map(r=>r.ugb));
 
-  const medidas = freqCount(filtered.flatMap(r=>Array.isArray(r.dimensoes_medidas)?r.dimensoes_medidas:[]));
-  const lacunas = freqCount(filtered.flatMap(r=>Array.isArray(r.dimensoes_lacunas)?r.dimensoes_lacunas:[]));
+  const medidas = freqCount(filtered.flatMap(r=>toArrayField(r.dimensoes_medidas)));
+  const lacunas = freqCount(filtered.flatMap(r=>toArrayField(r.dimensoes_lacunas)));
 
   const ugbOptions = uniqueSorted(filtered.map(r=>r.ugb));
   const focusUgb = host.dataset.focusUgb && ugbOptions.includes(host.dataset.focusUgb) ? host.dataset.focusUgb : (ugbOptions[0]||'');
 
   host.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Aderência da pesquisa <small>${ader.totalRespondidas} de ${ader.totalUniverso} UGBs já responderam</small></div>
+      ${renderAderenciaBlock(ader, aderPct)}
+    </div>
+
     <div class="kpi-row">
       <div class="kpi-card"><div class="kpi-num">${total}</div><div class="kpi-lbl">Respostas</div></div>
+      <div class="kpi-card"><div class="kpi-num">${aderPct}%</div><div class="kpi-lbl">Aderência (UGBs cobertas)</div></div>
       <div class="kpi-card"><div class="kpi-num">${avgNivel}</div><div class="kpi-lbl">Nível médio de entrega</div></div>
       <div class="kpi-card"><div class="kpi-num">${nEmpresas}</div><div class="kpi-lbl">Empresas participantes</div></div>
-      <div class="kpi-card"><div class="kpi-num">${nUgbs}</div><div class="kpi-lbl">UGBs / áreas participantes</div></div>
     </div>
 
     <div class="dash-grid">
@@ -561,6 +625,42 @@ function renderDashboard(){
   if(focusUgb) renderUgbFocus(focusUgb);
 }
 
+function renderAderenciaBlock(ader, aderPct){
+  const barColor = aderPct>=80?'var(--green)':aderPct>=50?'var(--orange)':'var(--red)';
+  const empresaBars = ader.porEmpresa.map(e=>{
+    const pct = e.total? Math.round(e.respondidas/e.total*100) : 0;
+    return `<div class="bar-row">
+      <div class="bar-lbl" title="${EMPRESA_NOMES[e.empresa]||e.empresa}">${EMPRESA_NOMES[e.empresa]||e.empresa}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${pct>=80?'var(--green)':pct>=50?'var(--orange)':'var(--red)'}"></div></div>
+      <div class="bar-val">${e.respondidas}/${e.total}</div>
+    </div>`;
+  }).join('');
+
+  const pendentesPorEmpresa = ader.porEmpresa.filter(e=>e.pendentes.length);
+  const pendentesHtml = pendentesPorEmpresa.length ? pendentesPorEmpresa.map(e=>`
+    <div style="margin-bottom:10px">
+      <div style="font-size:11.5px;font-weight:700;color:var(--red);margin-bottom:6px">${EMPRESA_NOMES[e.empresa]||e.empresa} <span style="font-weight:500;color:var(--muted)">— ${e.pendentes.length} UGB(s) sem resposta</span></div>
+      <div class="tag-cloud">
+        ${e.pendentes.map(u=>`<div class="tag-chip" style="border-color:var(--red);color:var(--red);background:var(--red-bg)">${u}</div>`).join('')}
+      </div>
+    </div>`).join('') : `<div class="empty-note" style="color:var(--green);padding:8px 0">Todas as UGBs no escopo atual já responderam 🎉</div>`;
+
+  return `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+      <div style="font-size:32px;font-weight:700;color:${barColor};font-family:'IBM Plex Mono',monospace">${aderPct}%</div>
+      <div style="flex:1">
+        <div class="bar-track" style="height:14px">
+          <div class="bar-fill" style="width:${aderPct}%;background:${barColor}"></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">${ader.totalRespondidas} de ${ader.totalUniverso} UGBs (considerando os filtros de empresa/UGB atuais) já enviaram resposta</div>
+      </div>
+    </div>
+    <div style="margin-bottom:16px">${empresaBars}</div>
+    <div class="card-title" style="margin-bottom:10px">UGBs ainda não avaliadas</div>
+    ${pendentesHtml}
+  `;
+}
+
 function setFocusUgb(ugb){
   document.getElementById('tab-dashboard').dataset.focusUgb = ugb;
   renderUgbFocus(ugb);
@@ -575,8 +675,8 @@ function renderUgbFocus(ugb){
   const avg = (rows.reduce((s,r)=>s+(r.nivel_entrega||0),0)/total).toFixed(1);
   const nivelCounts = [1,2,3,4,5].map(n=>[String(n), rows.filter(r=>r.nivel_entrega===n).length]);
   const nivelColorMap = {}; [1,2,3,4,5].forEach(n=>nivelColorMap[String(n)]=NIVEL_INFO[n].color);
-  const medidas = freqCount(rows.flatMap(r=>Array.isArray(r.dimensoes_medidas)?r.dimensoes_medidas:[]));
-  const lacunas = freqCount(rows.flatMap(r=>Array.isArray(r.dimensoes_lacunas)?r.dimensoes_lacunas:[]));
+  const medidas = freqCount(rows.flatMap(r=>toArrayField(r.dimensoes_medidas)));
+  const lacunas = freqCount(rows.flatMap(r=>toArrayField(r.dimensoes_lacunas)));
 
   const quotes = rows.filter(r=>r.analise_kpis).slice(0,10).map(r=>`
     <div class="quote-item">
@@ -618,7 +718,7 @@ function renderDataset(){
   const host = document.getElementById('tab-dataset');
   host.innerHTML = `
     <div class="table-toolbar">
-      <div class="table-count">${filtered.length} de ${allRows.length} respostas</div>
+      <div class="table-count">Dataset completo — ${filtered.length} de ${allRows.length} respostas</div>
       <button class="btn-export" onclick="exportCSV()">↓ Exportar CSV</button>
     </div>
     <div class="tbl-wrap">
@@ -653,8 +753,8 @@ function renderDataset(){
         <div class="detail-grid">
           <div class="detail-block"><b>Definição de Básico Bem Feito</b><p>${r.definicao_bbf||'—'}</p></div>
           <div class="detail-block"><b>Justificativa do nível</b><p>${r.justificativa||'—'}</p></div>
-          <div class="detail-block"><b>Dimensões já medidas</b><ul>${(r.dimensoes_medidas||[]).map(d=>`<li>${d}</li>`).join('')||'<li>—</li>'}</ul></div>
-          <div class="detail-block"><b>Lacunas identificadas</b><ul>${(r.dimensoes_lacunas||[]).map(d=>`<li>${d}</li>`).join('')||'<li>—</li>'}</ul></div>
+          <div class="detail-block"><b>Dimensões já medidas</b><ul>${toArrayField(r.dimensoes_medidas).map(d=>`<li>${d}</li>`).join('')||'<li>—</li>'}</ul></div>
+          <div class="detail-block"><b>Lacunas identificadas</b><ul>${toArrayField(r.dimensoes_lacunas).map(d=>`<li>${d}</li>`).join('')||'<li>—</li>'}</ul></div>
           <div class="detail-block" style="grid-column:1/-1"><b>Análise crítica dos indicadores</b><p>${r.analise_kpis||'—'}</p></div>
         </div>
       </td>
@@ -674,7 +774,8 @@ function exportCSV(){
   filtered.forEach(r=>{
     lines.push(cols.map(c=>{
       let v = r[c];
-      if(Array.isArray(v)) v = v.join(' | ');
+      if(c==='dimensoes_medidas' || c==='dimensoes_lacunas') v = toArrayField(v).join(' | ');
+      else if(Array.isArray(v)) v = v.join(' | ');
       return esc(v);
     }).join(','));
   });
@@ -683,6 +784,66 @@ function exportCSV(){
   const a = document.createElement('a');
   a.href = url; a.download = `bbf_respostas_${new Date().toISOString().slice(0,10)}.csv`;
   a.click(); URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════
+// SESSÕES DE RESPOSTA (visão por sessão / Q&A)
+// ══════════════════════════════════════════
+function renderSessoes(){
+  const host = document.getElementById('tab-sessoes');
+  host.innerHTML = `
+    <div class="table-toolbar">
+      <div class="table-count">${filtered.length} sessão(ões) de resposta encontrada(s)</div>
+    </div>
+    <div id="sessoes-list" style="display:flex;flex-direction:column;gap:14px"></div>
+  `;
+  const list = document.getElementById('sessoes-list');
+  if(!filtered.length){
+    list.innerHTML = `<div class="card"><div class="empty-note">Nenhuma sessão de resposta para os filtros selecionados.</div></div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(r=>{
+    const info = NIVEL_INFO[r.nivel_entrega]||{label:'—',color:'#666',bg:'#eee'};
+    const medidas = toArrayField(r.dimensoes_medidas);
+    const lacunas = toArrayField(r.dimensoes_lacunas);
+    return `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:12px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">${r.nome||'—'} <span style="font-weight:500;color:var(--muted);font-size:12px">· ${r.funcao||'—'}</span></div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${EMPRESA_NOMES[r.empresa]||r.empresa} · ${r.ugb||'—'} · ${fmtDate(r.created_at)}</div>
+        </div>
+        <span class="lvl-pill" style="color:${info.color};background:${info.bg}">${r.nivel_entrega||'—'} · ${info.label}</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Como esta UGB define "Básico Bem Feito"?</div>
+          <div style="font-size:12.5px;color:var(--text);line-height:1.55">${r.definicao_bbf||'—'}</div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Quais dimensões já são medidas?</div>
+          <ul style="padding-left:16px;font-size:12.5px;color:var(--text)">${medidas.map(d=>`<li>${d}</li>`).join('')||'<li>—</li>'}</ul>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Quais lacunas ainda existem?</div>
+          <ul style="padding-left:16px;font-size:12.5px;color:var(--text)">${lacunas.map(d=>`<li>${d}</li>`).join('')||'<li>—</li>'}</ul>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Nível de entrega selecionado</div>
+          <div style="font-size:12.5px;color:var(--text);line-height:1.55"><b style="color:${info.color}">${r.nivel_entrega} · ${info.label}</b> — ${NIVEL_ANCHORS[r.nivel_entrega]||''}</div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Justificativa do nível escolhido</div>
+          <div style="font-size:12.5px;color:var(--text);line-height:1.55">${r.justificativa||'—'}</div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Análise crítica dos indicadores</div>
+          <div style="font-size:12.5px;color:var(--text);line-height:1.55">${r.analise_kpis||'—'}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 </script>
 </body>
