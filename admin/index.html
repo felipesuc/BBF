@@ -108,6 +108,19 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 
 .empty-note{font-size:12px;color:var(--muted);text-align:center;padding:24px 0}
 
+/* ═══ ADERÊNCIA ═══ */
+.ader-emp-list{display:flex;flex-direction:column}
+.ader-emp-row{border-top:1px solid var(--border)}
+.ader-emp-row:first-child{border-top:none}
+.ader-emp-head{display:flex;align-items:center;gap:14px;padding:10px 2px}
+.ader-emp-name{width:170px;flex-shrink:0;font-size:12.5px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.ader-caret{font-size:10px;color:var(--muted);width:10px;display:inline-block}
+.ader-emp-bar{flex:1}
+.ader-emp-count{width:56px;text-align:right;font-size:11.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+.ader-emp-body{display:none;font-size:11.5px;color:var(--red);line-height:1.7;padding:2px 2px 12px 32px}
+.ader-emp-body.open{display:block}
+.ader-emp-body-lbl{font-weight:700;color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:.4px;margin-right:4px}
+
 /* ═══ UGB DETAIL ═══ */
 .ugb-select-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .ugb-select-row select{height:40px;padding:0 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:'IBM Plex Sans',sans-serif;min-width:260px}
@@ -627,26 +640,38 @@ function renderDashboard(){
 
 function renderAderenciaBlock(ader, aderPct){
   const barColor = aderPct>=80?'var(--green)':aderPct>=50?'var(--orange)':'var(--red)';
-  const empresaBars = ader.porEmpresa.map(e=>{
-    const pct = e.total? Math.round(e.respondidas/e.total*100) : 0;
-    return `<div class="bar-row">
-      <div class="bar-lbl" title="${EMPRESA_NOMES[e.empresa]||e.empresa}">${EMPRESA_NOMES[e.empresa]||e.empresa}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${pct>=80?'var(--green)':pct>=50?'var(--orange)':'var(--red)'}"></div></div>
-      <div class="bar-val">${e.respondidas}/${e.total}</div>
+
+  // ordena empresas pela aderência (mais crítica primeiro)
+  const ordenado = [...ader.porEmpresa].sort((a,b)=>{
+    const pctA = a.total? a.respondidas/a.total : 1;
+    const pctB = b.total? b.respondidas/b.total : 1;
+    return pctA - pctB;
+  });
+
+  const empresaRows = ordenado.map((e,i)=>{
+    const pct = e.total? Math.round(e.respondidas/e.total*100) : 100;
+    const cor = pct>=80?'var(--green)':pct>=50?'var(--orange)':'var(--red)';
+    const temPendentes = e.pendentes.length>0;
+    const rowId = `ader-emp-${e.empresa}`;
+    return `
+    <div class="ader-emp-row">
+      <div class="ader-emp-head" ${temPendentes?`onclick="toggleAderEmp('${rowId}')"`:''} style="${temPendentes?'cursor:pointer':''}">
+        <div class="ader-emp-name">
+          ${temPendentes?`<span class="ader-caret" id="${rowId}-caret">▸</span>`:'<span class="ader-caret" style="visibility:hidden">▸</span>'}
+          ${EMPRESA_NOMES[e.empresa]||e.empresa}
+        </div>
+        <div class="ader-emp-bar"><div class="bar-track" style="height:10px"><div class="bar-fill" style="width:${pct}%;background:${cor}"></div></div></div>
+        <div class="ader-emp-count" style="color:${cor}">${e.respondidas}/${e.total}</div>
+      </div>
+      ${temPendentes ? `
+      <div class="ader-emp-body" id="${rowId}">
+        <span class="ader-emp-body-lbl">Pendentes:</span> ${e.pendentes.join(', ')}
+      </div>` : `<div class="ader-emp-body open" style="color:var(--green);font-size:11.5px">Todas as UGBs já responderam 🎉</div>`}
     </div>`;
   }).join('');
 
-  const pendentesPorEmpresa = ader.porEmpresa.filter(e=>e.pendentes.length);
-  const pendentesHtml = pendentesPorEmpresa.length ? pendentesPorEmpresa.map(e=>`
-    <div style="margin-bottom:10px">
-      <div style="font-size:11.5px;font-weight:700;color:var(--red);margin-bottom:6px">${EMPRESA_NOMES[e.empresa]||e.empresa} <span style="font-weight:500;color:var(--muted)">— ${e.pendentes.length} UGB(s) sem resposta</span></div>
-      <div class="tag-cloud">
-        ${e.pendentes.map(u=>`<div class="tag-chip" style="border-color:var(--red);color:var(--red);background:var(--red-bg)">${u}</div>`).join('')}
-      </div>
-    </div>`).join('') : `<div class="empty-note" style="color:var(--green);padding:8px 0">Todas as UGBs no escopo atual já responderam 🎉</div>`;
-
   return `
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
       <div style="font-size:32px;font-weight:700;color:${barColor};font-family:'IBM Plex Mono',monospace">${aderPct}%</div>
       <div style="flex:1">
         <div class="bar-track" style="height:14px">
@@ -655,10 +680,15 @@ function renderAderenciaBlock(ader, aderPct){
         <div style="font-size:11px;color:var(--muted);margin-top:4px">${ader.totalRespondidas} de ${ader.totalUniverso} UGBs (considerando os filtros de empresa/UGB atuais) já enviaram resposta</div>
       </div>
     </div>
-    <div style="margin-bottom:16px">${empresaBars}</div>
-    <div class="card-title" style="margin-bottom:10px">UGBs ainda não avaliadas</div>
-    ${pendentesHtml}
+    <div class="ader-emp-list">${empresaRows}</div>
   `;
+}
+
+function toggleAderEmp(rowId){
+  const body = document.getElementById(rowId);
+  const caret = document.getElementById(rowId+'-caret');
+  const open = body.classList.toggle('open');
+  if(caret) caret.textContent = open ? '▾' : '▸';
 }
 
 function setFocusUgb(ugb){
