@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pesquisa BBF — SJ Imóveis</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#0A3D7A; --navy-dark:#062D5C; --navy-mid:#1356A0;
+  --yellow:#FFC72C; --yellow-light:#FFF3C4;
+  --white:#FFFFFF; --bg:#F4F6FA; --border:#DDE3EE;
+  --text:#1A2742; --muted:#6B7A99;
+  --green:#16A34A; --green-bg:#DCFCE7;
+  --red:#DC2626; --red-bg:#FEE2E2;
+  --orange:#D97706; --orange-bg:#FEF3C7;
+  --blue:#2563EB; --blue-bg:#DBEAFE;
+  --gray:#9CA3AF; --gray-bg:#F3F4F6;
+  --r:12px; --r-sm:8px;
+  --sh:0 1px 4px rgba(10,61,122,.10);
+  --sh-md:0 4px 20px rgba(10,61,122,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:14px}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+
+/* ═══════════════════════════════════════
+   TELA INICIAL (WELCOME + AUTH)
+═══════════════════════════════════════ */
+#screen-welcome{
+  min-height:100vh; display:flex; flex-direction:column;
+  background:var(--navy);
+}
+.welcome-body{
+  flex:1; display:grid; grid-template-columns:1fr 440px;
+  align-items:center; gap:0; max-width:1100px;
+  margin:0 auto; padding:48px 32px; width:100%;
+}
+/* Lado esquerdo — manifesto */
+.wl-left{ padding-right:56px; }
+.wl-eyebrow{
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(255,199,44,.12); border:1px solid rgba(255,199,44,.3);
+  color:var(--yellow); padding:5px 14px; border-radius:20px;
+  font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase;
+  margin-bottom:28px; font-family:'IBM Plex Mono',monospace;
+}
+.wl-eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--yellow);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.wl-headline{
+  font-size:46px; font-weight:700; color:#fff; line-height:1.12;
+  letter-spacing:-1.2px; margin-bottom:22px;
+}
+.wl-headline em{ color:var(--yellow); font-style:normal; }
+.wl-body{ font-size:15px; color:rgba(255,255,255,.65); line-height:1.75; margin-bottom:36px; max-width:420px; }
+.wl-stats{
+  display:flex; gap:28px;
+}
+.wl-stat{ display:flex; flex-direction:column; gap:3px; }
+.wl-stat-num{ font-size:28px; font-weight:700; color:var(--yellow); font-family:'IBM Plex Mono',monospace; line-height:1; }
+.wl-stat-lbl{ font-size:11px; color:rgba(255,255,255,.45); text-transform:uppercase; letter-spacing:.6px; }
+
+/* Lado direito — card auth */
+.wl-right{}
+.auth-card{
+  background:#fff; border-radius:16px;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  overflow:hidden;
+}
+.auth-card-head{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);
+  padding:24px 28px 20px; display:flex; align-items:center; gap:12px;
+}
+.auth-logo{
+  width:36px; height:36px; background:var(--yellow); border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; color:var(--navy); font-size:15px;
+  font-family:'IBM Plex Mono',monospace; flex-shrink:0;
+}
+.auth-card-title{ font-size:15px; font-weight:700; color:#fff; }
+.auth-card-sub{ font-size:11px; color:rgba(255,255,255,.55); margin-top:2px; }
+.auth-body{ padding:28px; }
+/* Auth steps */
+.auth-step{ display:none; }
+.auth-step.active{ display:block; animation:slideIn .3s ease; }
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.auth-step-title{ font-size:17px; font-weight:700; color:var(--text); margin-bottom:6px; letter-spacing:-.3px; }
+.auth-step-desc{ font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:22px; }
+.auth-domains{
+  display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px;
+}
+.auth-domain-tag{
+  font-size:10px; font-weight:600; font-family:'IBM Plex Mono',monospace;
+  padding:3px 10px; border-radius:20px;
+  background:rgba(10,61,122,.06); color:var(--navy);
+  border:1px solid rgba(10,61,122,.15);
+}
+.auth-fg{ display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+.auth-fl{ font-size:10px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+.auth-fi{
+  height:46px; padding:0 14px; border:1.5px solid var(--border);
+  border-radius:var(--r-sm); font-size:14px; font-family:'IBM Plex Sans',sans-serif;
+  color:var(--text); background:#fff; outline:none; width:100%;
+  transition:border-color .2s, box-shadow .2s;
+}
+.auth-fi:focus{ border-color:var(--navy); box-shadow:0 0 0 3px rgba(10,61,122,.10); }
+.auth-fi::placeholder{ color:var(--muted); }
+/* OTP digit inputs */
+.otp-wrap{ display:flex; gap:8px; justify-content:center; margin-bottom:20px; }
+.otp-digit{
+  width:48px; height:56px; border:2px solid var(--border); border-radius:var(--r-sm);
+  font-size:22px; font-weight:700; font-family:'IBM Plex Mono',monospace;
+  text-align:center; outline:none; color:var(--text); transition:all .2s; background:#fff;
+}
+.otp-digit:focus{ border-color:var(--navy); box-shadow:0 0 0 3px rgba(10,61,122,.12); }
+.otp-digit.filled{ border-color:var(--navy); background:var(--blue-bg); color:var(--navy); }
+.auth-btn{
+  width:100%; height:48px; background:var(--navy); color:#fff;
+  border:none; border-radius:var(--r-sm); font-size:14px; font-weight:700;
+  cursor:pointer; font-family:'IBM Plex Sans',sans-serif;
+  transition:all .2s; display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.auth-btn:hover:not(:disabled){ background:var(--navy-dark); box-shadow:0 4px 14px rgba(10,61,122,.3); }
+.auth-btn:disabled{ background:var(--border); color:var(--muted); cursor:not-allowed; }
+.auth-btn.loading::after{
+  content:''; width:16px; height:16px; border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.auth-link{
+  display:block; text-align:center; margin-top:14px; font-size:12px;
+  color:var(--muted); cursor:pointer; transition:color .2s;
+}
+.auth-link:hover{ color:var(--navy); }
+.auth-link span{ color:var(--navy); font-weight:600; text-decoration:underline; }
+.auth-alert{
+  padding:10px 14px; border-radius:var(--r-sm); font-size:12px; line-height:1.5;
+  margin-top:12px; display:none;
+}
+.auth-alert.err{ background:var(--red-bg); color:var(--red); border:1px solid rgba(220,38,38,.2); }
+.auth-alert.ok{ background:var(--green-bg); color:var(--green); border:1px solid rgba(22,163,74,.2); }
+.auth-alert.show{ display:block; }
+.auth-email-sent{
+  background:var(--blue-bg); border:1px solid rgba(37,99,235,.2);
+  border-radius:var(--r-sm); padding:14px; margin-bottom:18px;
+  font-size:12px; color:var(--blue); line-height:1.6;
+}
+.auth-email-sent strong{ display:block; margin-bottom:3px; font-size:13px; }
+.auth-resend{ font-size:11px; color:var(--muted); text-align:center; margin-top:10px; }
+.auth-resend button{
+  background:none; border:none; color:var(--navy); font-weight:600; cursor:pointer;
+  font-family:'IBM Plex Sans',sans-serif; font-size:11px; text-decoration:underline;
+}
+/* Welcome footer */
+.welcome-footer{
+  text-align:center; padding:16px; border-top:1px solid rgba(255,255,255,.08);
+  font-size:11px; color:rgba(255,255,255,.3);
+}
+
+/* ═══════════════════════════════════════
+   TELA DO APP (SURVEY)
+═══════════════════════════════════════ */
+#screen-app{ display:none; flex-direction:column; min-height:100vh; }
+#screen-app.active{ display:flex; }
+
+.hdr{
+  background:var(--navy); padding:0 32px; height:60px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,.22);
+}
+.hdr-brand{ display:flex; align-items:center; gap:12px; }
+.hdr-logo{
+  width:34px; height:34px; background:var(--yellow); border-radius:7px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; color:var(--navy); font-size:15px; flex-shrink:0;
+  font-family:'IBM Plex Mono',monospace;
+}
+.hdr-title{ font-size:15px; font-weight:700; color:#fff; letter-spacing:-.3px; }
+.hdr-title span{ color:var(--yellow); }
+.hdr-sub{ font-size:10px; color:rgba(255,255,255,.55); margin-top:1px; }
+.hdr-right{ display:flex; align-items:center; gap:12px; }
+.hdr-user{
+  font-size:11px; color:rgba(255,255,255,.6);
+  font-family:'IBM Plex Mono',monospace; max-width:200px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.hdr-logout{
+  font-size:11px; color:rgba(255,255,255,.4); background:none; border:none;
+  cursor:pointer; font-family:'IBM Plex Sans',sans-serif; transition:color .2s;
+  padding:4px 8px; border-radius:4px;
+}
+.hdr-logout:hover{ color:#fff; background:rgba(255,255,255,.1); }
+
+.app-body{ flex:1; padding:36px 24px 80px; display:flex; justify-content:center; }
+.frame{ width:100%; max-width:760px; }
+
+/* ── PROGRESS ── */
+.prog-wrap{ margin-bottom:36px; }
+.prog-steps{ display:flex; align-items:center; gap:0; margin-bottom:12px; }
+.ps{ display:flex; align-items:center; flex:1; }
+.ps:last-child{ flex:none; }
+.ps-dot{
+  width:32px; height:32px; border-radius:50%; display:flex; align-items:center;
+  justify-content:center; font-size:12px; font-weight:700;
+  font-family:'IBM Plex Mono',monospace; flex-shrink:0; transition:all .3s;
+  border:2px solid var(--border); background:#fff; color:var(--muted);
+}
+.ps-dot.done{ background:var(--navy); border-color:var(--navy); color:#fff; }
+.ps-dot.active{ background:var(--yellow); border-color:var(--yellow); color:var(--navy); }
+.ps-line{ flex:1; height:2px; background:var(--border); transition:background .3s; margin:0 4px; }
+.ps-line.done{ background:var(--navy); }
+.prog-labels{ display:flex; justify-content:space-between; padding:0 4px; }
+.pl{ font-size:10px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; text-align:center; transition:color .3s; flex:1; }
+.pl.active{ color:var(--navy); }
+.pl.done{ color:var(--navy); }
+
+/* ── CARD ── */
+.card{ background:#fff; border-radius:var(--r); box-shadow:var(--sh-md); border:1px solid var(--border); overflow:hidden; animation:slideIn .3s ease; }
+.card-head{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);
+  padding:28px 32px 24px; position:relative; overflow:hidden;
+}
+.card-head::after{
+  content:''; position:absolute; right:-40px; top:-40px;
+  width:160px; height:160px; border-radius:50%;
+  background:rgba(255,199,44,.08);
+}
+.step-eyebrow{ font-size:10px; font-weight:600; color:rgba(255,199,44,.8); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:8px; font-family:'IBM Plex Mono',monospace; }
+.step-title{ font-size:22px; font-weight:700; color:#fff; line-height:1.25; letter-spacing:-.4px; }
+.step-desc{ font-size:13px; color:rgba(255,255,255,.65); margin-top:8px; line-height:1.6; max-width:520px; }
+.card-body{ padding:32px; }
+
+/* ── FORM ELEMENTS ── */
+.fg{ display:flex; flex-direction:column; gap:6px; margin-bottom:24px; }
+.fl{ font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+.fl span{ color:var(--red); margin-left:2px; }
+.fi{
+  height:44px; padding:0 14px; border:1.5px solid var(--border); border-radius:var(--r-sm);
+  font-size:14px; font-family:'IBM Plex Sans',sans-serif; color:var(--text);
+  background:#fff; outline:none; transition:border-color .2s, box-shadow .2s; width:100%;
+}
+.fi:focus{ border-color:var(--navy); box-shadow:0 0 0 3px rgba(10,61,122,.10); }
+.fi::placeholder{ color:var(--muted); }
+select.fi{
+  cursor:pointer; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7A99' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 12px center; padding-right:36px;
+}
+textarea.fi{ height:auto; padding:12px 14px; resize:vertical; min-height:110px; line-height:1.6; }
+.fg-hint{ font-size:12px; color:var(--muted); line-height:1.5; margin-top:2px; }
+
+/* ── BARS ── */
+.bars-wrap{ display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+.bars-item{
+  display:flex; align-items:flex-start; gap:14px; padding:14px 16px;
+  border:2px solid var(--border); border-radius:var(--r-sm);
+  cursor:pointer; transition:all .2s; background:#fff;
+}
+.bars-item:hover{ border-color:var(--navy); background:#F7F9FF; }
+.bars-item.selected{ border-color:var(--navy); background:linear-gradient(135deg,#EEF2FF 0%,#F0F5FF 100%); box-shadow:0 0 0 3px rgba(10,61,122,.08); }
+.bars-item.selected.lvl1{ border-color:var(--red); background:var(--red-bg); box-shadow:0 0 0 3px rgba(220,38,38,.08); }
+.bars-item.selected.lvl1 .bars-num{ background:var(--red); border-color:var(--red); color:#fff; }
+.bars-item.selected.lvl2{ border-color:var(--orange); background:var(--orange-bg); box-shadow:0 0 0 3px rgba(217,119,6,.08); }
+.bars-item.selected.lvl2 .bars-num{ background:var(--orange); border-color:var(--orange); color:#fff; }
+.bars-item.selected.lvl3{ border-color:var(--blue); background:var(--blue-bg); box-shadow:0 0 0 3px rgba(37,99,235,.08); }
+.bars-item.selected.lvl3 .bars-num{ background:var(--blue); border-color:var(--blue); color:#fff; }
+.bars-item.selected.lvl4{ border-color:#7C3AED; background:#F5F3FF; box-shadow:0 0 0 3px rgba(124,58,237,.08); }
+.bars-item.selected.lvl4 .bars-num{ background:#7C3AED; border-color:#7C3AED; color:#fff; }
+.bars-item.selected.lvl5{ border-color:var(--green); background:var(--green-bg); box-shadow:0 0 0 3px rgba(22,163,74,.08); }
+.bars-item.selected.lvl5 .bars-num{ background:var(--green); border-color:var(--green); color:#fff; }
+.bars-num{
+  width:36px; height:36px; border-radius:50%; border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; font-weight:700; color:var(--muted); flex-shrink:0;
+  font-family:'IBM Plex Mono',monospace; transition:all .2s;
+}
+.bars-txt{ flex:1; }
+.bars-label{ font-size:13px; font-weight:700; color:var(--text); margin-bottom:2px; }
+.bars-anchor{ font-size:12px; color:var(--muted); line-height:1.5; }
+
+/* ── KPI TABLE ── */
+.kpi-ugb-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.kpi-ugb-title{ font-size:13px; font-weight:700; color:var(--text); }
+.kpi-ugb-badge{ font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px; background:var(--navy); color:#fff; }
+.kpi-strip{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
+.kpi-mini{ background:var(--bg); border-radius:var(--r-sm); padding:12px 14px; border:1px solid var(--border); }
+.kpi-mini-lbl{ font-size:9px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+.kpi-mini-val{ font-size:20px; font-weight:700; font-family:'IBM Plex Mono',monospace; color:var(--text); line-height:1; }
+.kpi-mini-val.ok{ color:var(--green); } .kpi-mini-val.ng{ color:var(--red); }
+.kpi-mini-sub{ font-size:10px; color:var(--muted); margin-top:2px; }
+.tscroll{ overflow-x:auto; border-radius:var(--r-sm); border:1px solid var(--border); }
+table{ width:100%; border-collapse:collapse; font-size:12px; }
+thead th{ background:var(--navy); color:#fff; padding:9px 10px; text-align:left; font-size:10px; font-weight:600; white-space:nowrap; letter-spacing:.3px; }
+thead th.mc{ text-align:center; min-width:54px; }
+tbody tr{ border-bottom:1px solid var(--border); transition:background .1s; }
+tbody tr:hover{ background:#F7F9FC; }
+tbody tr:last-child{ border-bottom:none; }
+td{ padding:8px 10px; vertical-align:middle; }
+.ci{ font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); width:32px; }
+.cn{ font-size:11.5px; line-height:1.4; max-width:280px; }
+.cm{ font-family:'IBM Plex Mono',monospace; font-size:11px; text-align:center; white-space:nowrap; color:var(--muted); }
+td.mc{ text-align:center; padding:8px 4px; }
+.cv{ display:inline-flex; align-items:center; justify-content:center; padding:2px 7px; border-radius:5px; font-size:10.5px; font-family:'IBM Plex Mono',monospace; font-weight:500; min-width:52px; white-space:nowrap; }
+.cv.ok{ background:var(--green-bg); color:var(--green); }
+.cv.ng{ background:var(--red-bg); color:var(--red); }
+.cv.info{ background:var(--blue-bg); color:var(--blue); }
+.cv.na{ background:var(--gray-bg); color:var(--gray); font-style:italic; font-size:9.5px; }
+.cv.noref{ background:var(--gray-bg); color:var(--muted); }
+.critique-section{ margin-top:20px; }
+.critique-label{ font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.critique-label::after{ content:''; flex:1; height:1px; background:var(--border); }
+.critique-guide{ background:var(--yellow-light); border:1px solid rgba(255,199,44,.5); border-radius:var(--r-sm); padding:14px 16px; margin-bottom:12px; font-size:12px; color:#78350F; line-height:1.6; }
+.critique-guide strong{ font-weight:600; display:block; margin-bottom:4px; }
+.empty-kpi{ padding:32px; text-align:center; color:var(--muted); font-size:13px; }
+
+/* ── DIMENSION LIST ── */
+.dim-section{ margin-bottom:28px; }
+.dim-header{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.dim-badge{ display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; }
+.dim-badge.ok{ background:var(--green-bg); color:var(--green); border:1.5px solid rgba(22,163,74,.25); }
+.dim-badge.gap{ background:var(--red-bg); color:var(--red); border:1.5px solid rgba(220,38,38,.25); }
+.dim-desc{ font-size:12px; color:var(--muted); line-height:1.5; margin-bottom:10px; }
+.dim-input-row{ display:flex; gap:8px; margin-bottom:10px; }
+.dim-input-row .fi{ flex:1; height:40px; font-size:13px; }
+.dim-add-btn{ height:40px; padding:0 16px; border-radius:var(--r-sm); border:none; cursor:pointer; font-size:13px; font-weight:600; font-family:'IBM Plex Sans',sans-serif; transition:all .2s; flex-shrink:0; }
+.dim-add-btn.ok{ background:var(--green); color:#fff; }
+.dim-add-btn.ok:hover{ background:#15803D; }
+.dim-add-btn.gap{ background:var(--red); color:#fff; }
+.dim-add-btn.gap:hover{ background:#B91C1C; }
+.dim-list{ display:flex; flex-direction:column; gap:6px; }
+.dim-item{ display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border-radius:var(--r-sm); background:var(--bg); border:1px solid var(--border); animation:fadeIn .2s ease; }
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.dim-item.ok{ border-color:rgba(22,163,74,.3); background:var(--green-bg); }
+.dim-item.gap{ border-color:rgba(220,38,38,.3); background:var(--red-bg); }
+.dim-item-icon{ font-size:14px; flex-shrink:0; margin-top:1px; }
+.dim-item-text{ flex:1; font-size:13px; color:var(--text); line-height:1.45; }
+.dim-item-del{ width:24px; height:24px; border-radius:50%; border:none; background:none; cursor:pointer; color:var(--muted); font-size:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .2s; }
+.dim-item-del:hover{ background:rgba(220,38,38,.12); color:var(--red); }
+.dim-empty{ font-size:12px; color:var(--muted); font-style:italic; padding:10px 12px; border:1.5px dashed var(--border); border-radius:var(--r-sm); text-align:center; }
+.dim-counter{ font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; padding:2px 8px; border-radius:10px; background:var(--border); color:var(--muted); margin-left:auto; }
+.dim-counter.has{ background:var(--navy); color:#fff; }
+.dim-divider{ height:1px; background:var(--border); margin:24px 0; }
+
+/* ── SUMMARY ── */
+.summary-item{ display:flex; flex-direction:column; gap:4px; padding:16px 0; border-bottom:1px solid var(--border); }
+.summary-item:last-child{ border-bottom:none; }
+.si-label{ font-size:10px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+.si-value{ font-size:14px; color:var(--text); line-height:1.5; }
+.score-badge{ display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:20px; font-weight:700; }
+.identity-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+.tag{ background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:3px 12px; font-size:12px; color:var(--muted); }
+.si-dim-list{ display:flex; flex-direction:column; gap:5px; margin-top:6px; }
+.si-dim-item{ display:flex; align-items:flex-start; gap:8px; font-size:12.5px; line-height:1.45; color:var(--muted); }
+.si-dim-item .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+.si-dim-item .dot.ok{ background:var(--green); }
+.si-dim-item .dot.gap{ background:var(--red); }
+
+/* ── ACTIONS ── */
+.actions{ display:flex; align-items:center; justify-content:space-between; margin-top:28px; gap:12px; }
+.btn{ height:46px; padding:0 28px; border-radius:var(--r-sm); font-size:14px; font-weight:600; cursor:pointer; transition:all .2s; display:inline-flex; align-items:center; gap:8px; border:none; font-family:'IBM Plex Sans',sans-serif; }
+.btn-next{ background:var(--navy); color:#fff; }
+.btn-next:hover{ background:var(--navy-dark); box-shadow:0 4px 14px rgba(10,61,122,.3); }
+.btn-next:disabled{ background:var(--border); color:var(--muted); cursor:not-allowed; box-shadow:none; }
+.btn-submit{ background:var(--green); color:#fff; }
+.btn-submit:hover{ background:#15803D; box-shadow:0 4px 14px rgba(22,163,74,.35); }
+.btn-export{ background:none; border:1.5px solid var(--navy); color:var(--navy); }
+.btn-export:hover{ background:var(--navy); color:#fff; }
+
+/* ── ALERT ── */
+.alert{ padding:12px 16px; border-radius:var(--r-sm); font-size:12px; line-height:1.5; margin-top:8px; display:none; }
+.alert.err{ background:var(--red-bg); color:var(--red); border:1px solid rgba(220,38,38,.2); }
+.alert.show{ display:block; }
+
+/* ── SUCCESS ── */
+.success-wrap{ text-align:center; padding:48px 32px; }
+.success-icon{ width:72px; height:72px; background:var(--green-bg); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:32px; }
+.success-title{ font-size:24px; font-weight:700; color:var(--text); margin-bottom:8px; letter-spacing:-.4px; }
+.success-sub{ font-size:14px; color:var(--muted); line-height:1.6; max-width:420px; margin:0 auto 28px; }
+.success-actions{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+/* ── SAVING OVERLAY ── */
+#saving-overlay{
+  display:none; position:fixed; inset:0; background:rgba(10,61,122,.6);
+  z-index:999; align-items:center; justify-content:center; flex-direction:column; gap:16px;
+}
+#saving-overlay.show{ display:flex; }
+.saving-box{
+  background:#fff; border-radius:var(--r); padding:32px 40px; text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+}
+.saving-spinner{
+  width:40px; height:40px; border:3px solid var(--border);
+  border-top-color:var(--navy); border-radius:50%;
+  animation:spin .8s linear infinite; margin:0 auto 14px;
+}
+.saving-text{ font-size:14px; font-weight:600; color:var(--text); }
+.saving-sub{ font-size:12px; color:var(--muted); margin-top:4px; }
+
+/* responsive */
+@media(max-width:900px){
+  .welcome-body{ grid-template-columns:1fr; padding:32px 24px; gap:40px; }
+  .wl-left{ padding-right:0; text-align:center; }
+  .wl-headline{ font-size:34px; }
+  .wl-stats{ justify-content:center; }
+  .wl-body{ margin:0 auto 28px; }
+}
+
+/* ═══ COMPANY SELECTOR ═══ */
+.co-selector-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
+.co-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+.co-card{border:1.5px solid var(--border);border-radius:var(--r-sm);padding:10px 8px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:5px;background:#fff;}
+.co-card:hover{border-color:var(--navy);background:rgba(10,61,122,.03);}
+.co-card.selected{border-color:var(--navy);background:rgba(10,61,122,.06);box-shadow:0 0 0 3px rgba(10,61,122,.10);}
+.co-card-logo{width:36px;height:36px;border-radius:8px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.co-card.selected .co-card-logo{background:var(--yellow);color:var(--navy);}
+.co-card-name{font-size:12px;font-weight:600;color:var(--text);text-align:center;}
+.co-card-desc{font-size:10px;color:var(--muted);text-align:center;line-height:1.4;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     TELA WELCOME / AUTH
+══════════════════════════════════════════════ -->
+<div id="screen-welcome">
+
+  <div class="welcome-body">
+    <!-- MANIFESTO -->
+    <div class="wl-left">
+      <div class="wl-eyebrow">
+        <span class="wl-eyebrow-dot"></span>
+        Pesquisa Básico Bem Feito · 2026
+      </div>
+      <div class="wl-headline">
+        A sua percepção<br>
+        <em>constrói o básico bem feito</em>
+      </div>
+      <div class="wl-body">
+        Você está na linha de frente da operação. Ninguém entende melhor do que você o que funciona, o que oscila e o que ainda não tem padrão na sua área.<br><br>
+        Esta pesquisa não é uma auditoria. É um espaço para você nos dizer, com honestidade, onde o básico está sendo bem feito e onde ainda há lacunas. A sua resposta vai orientar as decisões.
+      </div>
+
+    </div>
+
+    <!-- CARD ACESSO -->
+    <div class="wl-right">
+      <div class="auth-card">
+        <div class="auth-card-head">
+          <div class="auth-logo">SJ</div>
+          <div>
+            <div class="auth-card-title">Acesso de Líderes</div>
+            <div class="auth-card-sub">SJ Imóveis · Básico Bem Feito 2026</div>
+          </div>
+        </div>
+        <div class="auth-body">
+          <div class="auth-step active" id="auth-step-email">
+            <div class="auth-step-title">Identificação</div>
+            <div class="auth-step-desc">Selecione sua empresa e informe seu e-mail institucional.</div>
+            <div class="co-selector-label">Sua empresa</div>
+            <div class="co-cards">
+              <div class="co-card" data-co="sj" onclick="selectCompany('sj')">
+                <div class="co-card-logo">SJ</div>
+                <div class="co-card-name">SJ Imóveis</div>
+                <div class="co-card-desc">Locação e gestão<br>imobiliária</div>
+              </div>
+              <div class="co-card" data-co="readi" onclick="selectCompany('readi')">
+                <div class="co-card-logo">RE</div>
+                <div class="co-card-name">READI</div>
+                <div class="co-card-desc">Regularização<br>documental</div>
+              </div>
+              <div class="co-card" data-co="adv" onclick="selectCompany('adv')">
+                <div class="co-card-logo">SJA</div>
+                <div class="co-card-name">SJ Advogados</div>
+                <div class="co-card-desc">Jurídico e<br>negociações</div>
+              </div>
+              <div class="co-card" data-co="vg" onclick="selectCompany('vg')">
+                <div class="co-card-logo">VG</div>
+                <div class="co-card-name">Verdegreen</div>
+                <div class="co-card-desc">Hotel e<br>hospitalidade</div>
+              </div>
+              <div class="co-card" data-co="iua" onclick="selectCompany('iua')">
+                <div class="co-card-logo">IU</div>
+                <div class="co-card-name">iu-á Hotel</div>
+                <div class="co-card-desc">Hotel e<br>hospitalidade</div>
+              </div>
+              <div class="co-card" data-co="cadis" onclick="selectCompany('cadis')">
+                <div class="co-card-logo">C3</div>
+                <div class="co-card-name">CADIS 3</div>
+                <div class="co-card-desc">Serviços<br>corporativos</div>
+              </div>
+            </div>
+            <div class="auth-fg">
+              <label class="auth-fl">E-mail institucional</label>
+              <input class="auth-fi" type="email" id="auth-email-input"
+                placeholder="seu.nome@empresa.com.br" autocomplete="email"
+                onkeydown="if(event.key==='Enter') entrar()">
+            </div>
+            <div class="auth-alert err" id="auth-err-email"></div>
+            <button class="auth-btn" id="auth-btn-send" onclick="entrar()">
+              Começar pesquisa →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="welcome-footer">
+    SJ Imóveis · Empresas SJ · Pesquisa interna — 1º Semestre 2026 · Acesso restrito a colaboradores
+  </div>
+</div>
+
+<!-- SAVING OVERLAY -->
+<div id="saving-overlay">
+  <div class="saving-box">
+    <div class="saving-spinner"></div>
+    <div class="saving-text">Salvando suas respostas…</div>
+    <div class="saving-sub">Aguarde um momento.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     TELA DO SURVEY
+══════════════════════════════════════════════ -->
+<div id="screen-app">
+
+  <header class="hdr">
+    <div class="hdr-brand">
+      <div class="hdr-logo">SJ</div>
+      <div>
+        <div class="hdr-title">Pesquisa <span>Básico Bem Feito</span></div>
+        <div class="hdr-sub">SJ Imóveis · 1º Semestre 2026</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="hdr-user" id="hdr-user-email"></div>
+      <button class="hdr-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <div class="frame">
+
+      <!-- PROGRESS -->
+      <div class="prog-wrap" id="prog-wrap">
+        <div class="prog-steps">
+          <div class="ps"><div class="ps-dot active" id="pd-1">1</div><div class="ps-line" id="pl-1"></div></div>
+          <div class="ps"><div class="ps-dot" id="pd-2">2</div><div class="ps-line" id="pl-2"></div></div>
+          <div class="ps"><div class="ps-dot" id="pd-3">3</div><div class="ps-line" id="pl-3"></div></div>
+          <div class="ps"><div class="ps-dot" id="pd-4">4</div></div>
+        </div>
+        <div class="prog-labels">
+          <div class="pl active" id="pl-lbl-1">Identificação</div>
+          <div class="pl" id="pl-lbl-2">Conceito BBF</div>
+          <div class="pl" id="pl-lbl-3">Autoavaliação</div>
+          <div class="pl" id="pl-lbl-4">Análise de indicadores</div>
+        </div>
+      </div>
+
+      <div id="step-host"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// SUPABASE (sem auth — só persistência)
+// ══════════════════════════════════════════════════
+const SUPABASE_URL = 'https://zwcclbtemxtefdtuylhs.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3Y2NsYnRlbXh0ZWZkdHV5bGhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjY2NzYsImV4cCI6MjA5OTEwMjY3Nn0.aKAaTcQwg3Yta-DPm7yd4m61xFaBshjZlZBhNEvfN3E';
+
+async function sbInsert(table, row) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(row)
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    return { error: { message: err } };
+  }
+  return { error: null };
+}
+
+const ALLOWED_DOMAINS = ['sj.com.br','cadis3.com.br','readi.com.br','samiradv.com.br','verdegreen.com.br','iuahotel.com.br'];
+
+function emailAllowed(email){
+  const domain = (email || '').trim().toLowerCase().split('@')[1] || '';
+  return ALLOWED_DOMAINS.includes(domain);
+}
+
+function entrar(){
+  const email = (document.getElementById('auth-email-input')?.value || '').trim().toLowerCase();
+  const errEl = document.getElementById('auth-err-email');
+  errEl.classList.remove('show');
+  if(!email || !email.includes('@')){
+    errEl.textContent = 'Digite um e-mail v\u00e1lido.';
+    errEl.classList.add('show'); return;
+  }
+  if(!emailAllowed(email)){
+    errEl.textContent = 'Este e-mail n\u00e3o tem permiss\u00e3o de acesso. Use seu e-mail institucional.';
+    errEl.classList.add('show'); return;
+  }
+  showApp(email);
+}
+
+function showApp(email){
+  state.user_email = email;
+  if(!state.nome){
+    state.nome = email.split('@')[0].replace(/[._]/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  }
+  activateCompany(selectedCompany);
+  document.getElementById('screen-welcome').style.display = 'none';
+  document.getElementById('screen-app').classList.add('active');
+  document.getElementById('hdr-user-email').textContent = email;
+  updateProgress(1);
+  renderCurrentStep();
+}
+
+function doLogout(){ location.reload(); }
+// ══════════════════════════════════════════════════
+// KPI DATA
+// ══════════════════════════════════════════════════
+const DATA = [{"item":1,"ugb":"Novos Clientes","indicador":"Número de imóveis captados","frequencia":"Mensal","meta":null,"jan":42,"fev":24,"mar":27,"abr":18,"mai":23,"jun":21,"meta_jan":41,"meta_fev":36,"meta_mar":60,"meta_abr":67,"meta_mai":60,"meta_jun":40},{"item":2,"ugb":"Novos Clientes","indicador":"Valores de imóveis captados — Monitoramento","frequencia":"Mensal","meta":null,"jan":129403,"fev":53750,"mar":98900,"abr":53600,"mai":240579,"jun":53850,"meta_jan":116967,"meta_fev":102703,"meta_mar":171712,"meta_abr":191142,"meta_mai":199700,"meta_jun":168319},{"item":6,"ugb":"Locação SJ Morar","indicador":"Quantidade de imóveis alugados - SJ Morar","frequencia":"Mensal","meta":null,"jan":91,"fev":59,"mar":96,"abr":68,"mai":69,"jun":68,"meta_jan":102,"meta_fev":81,"meta_mar":97,"meta_abr":102,"meta_mai":102,"meta_jun":97},{"item":7,"ugb":"Locação SJ Morar","indicador":"5% de Ligações Perdidas - SJ Morar","frequencia":"Mensal","meta":0.05,"jan":0.0357,"fev":0.0359,"mar":0.0426,"abr":0.0409,"mai":0.0539,"jun":0.0093},{"item":8,"ugb":"Locação SJ Morar","indicador":"GPL - Média de acompanhamento dos pretendentes - SJ Morar","frequencia":"Mensal","meta":2,"jan":1.3,"fev":1.2,"mar":1.1,"abr":1,"mai":1,"jun":1.3},{"item":10,"ugb":"Locação SJ Negócios","indicador":"Quantidade de imóveis alugados - SJ Negócios","frequencia":"Mensal","meta":null,"jan":44,"fev":18,"mar":37,"abr":36,"mai":39,"jun":21},{"item":11,"ugb":"Locação SJ Negócios","indicador":"5% de Ligações Perdidas - SJ Negócios","frequencia":"Mensal","meta":0.05,"jan":0,"fev":0.0368,"mar":0.0121,"abr":0.0708,"mai":0.1232,"jun":0.0405},{"item":12,"ugb":"Locação SJ Negócios","indicador":"GPL - Média de acompanhamento dos pretendentes - SJ Negócios","frequencia":"Mensal","meta":3,"jan":1.1,"fev":2.2,"mar":1.1,"abr":1.7,"mai":2.1,"jun":null},{"item":14,"ugb":"Relacionamento","indicador":"Reversões de desativações no trimestre","frequencia":"Trimestral","meta":25,"jan":null,"fev":null,"mar":31,"abr":null,"mai":null,"jun":29},{"item":15,"ugb":"Relacionamento","indicador":"100% das garantias com suspensão prevista realizadas","frequencia":"Mensal","meta":1,"jan":1,"fev":1,"mar":1,"abr":1,"mai":1,"jun":1},{"item":16,"ugb":"Relacionamento","indicador":"100% dos casos de seguro-fiança e Loft monitorados","frequencia":"Mensal","meta":1,"jan":1,"fev":1,"mar":1,"abr":1,"mai":1,"jun":1},{"item":17,"ugb":"Relacionamento","indicador":"Aumento da carteira de imóveis de proprietários ativos","frequencia":"Mensal","meta":"24 imóveis","jan":11,"fev":10,"mar":18,"abr":12,"mai":10,"jun":3},{"item":18,"ugb":"Relacionamento","indicador":"Nota de NPS","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":19,"ugb":"Relacionamento","indicador":"Crescimento de aluguel via gestão inteligente da carteira","frequencia":"Mensal","meta":21000,"jan":23189.72,"fev":31043.12,"mar":23730.87,"abr":21154.63,"mai":22834.94,"jun":21491.38},{"item":20,"ugb":"Relacionamento","indicador":"Nota da Pesquisa de Satisfação de Atendimento (SZ.Chat)","frequencia":"Mensal","meta":9,"jan":9.16,"fev":9.62,"mar":9.58,"abr":9.45,"mai":9.48,"jun":9.33},{"item":21,"ugb":"Relacionamento","indicador":"% de processos de desativação concluídos no mês","frequencia":"Mensal","meta":0.3,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.3285,"jun":0.3333},{"item":23,"ugb":"Desocupação","indicador":"MORAR — Qualidade da entrega do imóvel","frequencia":"Mensal","meta":0.45,"jan":0.4598,"fev":0.4189,"mar":0.4533,"abr":0.4643,"mai":0.4342,"jun":0.4714},{"item":24,"ugb":"Desocupação","indicador":"MORAR — Velocidade de disponibilidade do imóvel","frequencia":"Mensal","meta":6,"jan":5.63,"fev":3.71,"mar":6.46,"abr":3.93,"mai":5,"jun":4.22},{"item":25,"ugb":"Desocupação","indicador":"NEGÓCIOS — Velocidade de disponibilidade do imóvel","frequencia":"Mensal","meta":7,"jan":3.5,"fev":4.91,"mar":2.93,"abr":2.83,"mai":4.36,"jun":5.1},{"item":26,"ugb":"Desocupação","indicador":"NEGÓCIOS — Qualidade da entrega do imóvel","frequencia":"Mensal","meta":0.5,"jan":0.5,"fev":0.5263,"mar":0.6316,"abr":0.6923,"mai":0.5714,"jun":0.5556},{"item":27,"ugb":"Desocupação","indicador":"MORAR — Imóveis desocupados no período","frequencia":"Mensal","meta":0,"jan":78,"fev":64,"mar":83,"abr":92,"mai":62,"jun":81},{"item":28,"ugb":"Desocupação","indicador":"NEGÓCIOS — Imóveis desocupados no período","frequencia":"Mensal","meta":0,"jan":23,"fev":33,"mar":35,"abr":39,"mai":38,"jun":30},{"item":30,"ugb":"Vistoria","indicador":"Qualidade do laudo de vistoria: 93% de qualidade nos laudos avaliados","frequencia":"Mensal","meta":0.93,"jan":0.94,"fev":0.95,"mar":0.95,"abr":null,"mai":0.93,"jun":0.94},{"item":31,"ugb":"Vistoria","indicador":"Disponibilidade de agendamento: 93% das vistorias em até 3 dias úteis","frequencia":"Mensal","meta":0.93,"jan":0.9841,"fev":0.9831,"mar":0.9604,"abr":0.7165,"mai":0.895,"jun":0.9355},{"item":32,"ugb":"Vistoria","indicador":"Satisfação do cliente: 95% de satisfação durante a vistoria","frequencia":"Mensal","meta":0.95,"jan":0.9617,"fev":0.9565,"mar":0.9613,"abr":null,"mai":1,"jun":0.9909},{"item":34,"ugb":"Vistoria","indicador":"90% de qualidade dos relatórios de inspeção técnica","frequencia":"Mensal","meta":0.9,"jan":1,"fev":1,"mar":1,"abr":null,"mai":0.9,"jun":0.93},{"item":36,"ugb":"Apoio a clientes","indicador":"Média das avaliações do QSE","frequencia":"Mensal","meta":0.9,"jan":1,"fev":1,"mar":0.96,"abr":1,"mai":1,"jun":0.9046},{"item":37,"ugb":"Apoio a clientes","indicador":"Tempo de liberação das chaves para locação","frequencia":"Mensal","meta":1,"jan":1,"fev":1,"mar":1,"abr":0.9827,"mai":1,"jun":1},{"item":38,"ugb":"Apoio a clientes","indicador":"% de satisfação dos clientes com o atendimento do agente de visita","frequencia":"Mensal","meta":0.9,"jan":0.9054,"fev":1,"mar":0.9333,"abr":0.99,"mai":0.984,"jun":0.9827},{"item":39,"ugb":"Apoio a clientes","indicador":"% de adesão à Pesquisa de Satisfação (visitas)","frequencia":"Mensal","meta":0.2,"jan":null,"fev":null,"mar":0.085,"abr":0.2762,"mai":0.1893,"jun":0.4409},{"item":41,"ugb":"Apoio a clientes","indicador":"% de imóveis alugados após visitas acompanhadas","frequencia":"Mensal","meta":0.12,"jan":0.2046,"fev":0.16,"mar":0.1623,"abr":0.1228,"mai":0.1212,"jun":0.0956},{"item":43,"ugb":"Apoio a clientes","indicador":"Realizar atendimento expresso na recepção","frequencia":"Mensal","meta":0.06,"jan":0.0844,"fev":0.1235,"mar":0.136,"abr":0.139,"mai":0.166,"jun":0.2049},{"item":44,"ugb":"Arquivo","indicador":"Documentos disponibilizados no sistema no prazo de 7 dias","frequencia":"Mensal","meta":1,"jan":1,"fev":1,"mar":1,"abr":1,"mai":1,"jun":1},{"item":46,"ugb":"Arquivo","indicador":"Número de ocorrências de segurança dos documentos e rastreabilidade de pastas","frequencia":"Mensal","meta":3,"jan":2,"fev":3,"mar":2,"abr":3,"mai":1,"jun":3},{"item":47,"ugb":"Arquivo","indicador":"Acompanhamento do recebimento de aditivos de inclusão de imóveis","frequencia":"Mensal","meta":1,"jan":null,"fev":1,"mar":1,"abr":1,"mai":1,"jun":1},{"item":49,"ugb":"Atendimento a Inquilino - Contratos","indicador":"80% das demandas do SAC solucionadas no prazo","frequencia":"Mensal","meta":0.8,"jan":0.9882,"fev":1,"mar":0.935,"abr":0.9041,"mai":0.9242,"jun":0.8965},{"item":50,"ugb":"Atendimento a Inquilino - Contratos","indicador":"Recuperação financeira dos aluguéis na cobrança administrativa","frequencia":"Mensal","meta":0.76,"jan":0.8088,"fev":0.7375,"mar":0.7714,"abr":0.7311,"mai":0.7603,"jun":0.76},{"item":51,"ugb":"Atendimento a Inquilino - Contratos","indicador":"Acréscimo de R$ 21.000 nos aluguéis por majorações contratuais","frequencia":"Mensal","meta":21000,"jan":23189.72,"fev":31043.12,"mar":23730.87,"abr":21154.63,"mai":22834.94,"jun":21491.38},{"item":52,"ugb":"Atendimento a Inquilino - Contratos","indicador":"100% de aluguéis de faturamentos calculados","frequencia":"Mensal","meta":1,"jan":null,"fev":null,"mar":1,"abr":1,"mai":1,"jun":null},{"item":53,"ugb":"Atendimento a Inquilino - Imóveis","indicador":"80% das demandas do SAC solucionadas no prazo","frequencia":"Mensal","meta":0.8,"jan":0.9272,"fev":0.9911,"mar":0.951,"abr":0.9663,"mai":0.9575,"jun":0.9487},{"item":55,"ugb":"Atendimento a Inquilino - Imóveis","indicador":"100% de comunicação formal em casos de risco de vida","frequencia":"Mensal","meta":1,"jan":null,"fev":null,"mar":1,"abr":1,"mai":1,"jun":1},{"item":56,"ugb":"Concessionárias","indicador":"100% de encerramento contratual de energia em 5 dias úteis","frequencia":"Mensal","meta":1,"jan":1,"fev":1,"mar":1,"abr":1,"mai":1,"jun":1},{"item":57,"ugb":"Concessionárias","indicador":"92% de imóveis ocupados com titularidade de energia em nome do locatário","frequencia":"Mensal","meta":0.92,"jan":0.9744,"fev":0.9889,"mar":0.9898,"abr":0.9645,"mai":1,"jun":0.9759},{"item":59,"ugb":"Concessionárias","indicador":"92% de imóveis ocupados com titularidade de água em nome do locatário","frequencia":"Mensal","meta":0.92,"jan":0.9231,"fev":1,"mar":1,"abr":1,"mai":1,"jun":0.9474},{"item":60,"ugb":"Condomínio","indicador":"% de Protesto","frequencia":"Mensal","meta":0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":61,"ugb":"Condomínio","indicador":"% de Atualização dos Prédios","frequencia":"Trimestral","meta":1,"jan":null,"fev":null,"mar":1,"abr":null,"mai":null,"jun":0.99},{"item":63,"ugb":"Condomínio","indicador":"% das verificações de débitos de desocupação","frequencia":"Mensal","meta":0.98,"jan":1,"fev":1,"mar":1,"abr":0.991,"mai":0.98,"jun":0.98},{"item":64,"ugb":"Condomínio","indicador":"% de Notificações fechadas no mês","frequencia":"Mensal","meta":0.8,"jan":null,"fev":null,"mar":1,"abr":0.847,"mai":0.905,"jun":0.715},{"item":65,"ugb":"Crédito e Contrato","indicador":"Efetivação do aditivo com 89% concluído em 30 dias","frequencia":"Sazonal","meta":0.89,"jan":0.832,"fev":0.912,"mar":0.914,"abr":0.935,"mai":0.943,"jun":null},{"item":66,"ugb":"Crédito e Contrato","indicador":"Elaboração de contratos: 95% entregue no prazo de 3 horas","frequencia":"Mensal","meta":0.95,"jan":0.991,"fev":1,"mar":1,"abr":1,"mai":1,"jun":1},{"item":70,"ugb":"Crédito e Contrato","indicador":"Elaboração de cadastro: 95% entregue em 2 horas","frequencia":"Mensal","meta":0.95,"jan":0.978,"fev":0.974,"mar":0.985,"abr":1,"mai":0.994,"jun":1},{"item":71,"ugb":"Crédito e Contrato","indicador":"% de inadimplência do fim do mês — SJ Fortaleza (meta: 3,5%)","frequencia":"Mensal","meta":0.035,"jan":null,"fev":0.0311,"mar":0.0393,"abr":0.041,"mai":0.0423,"jun":0.0382},{"item":72,"ugb":"Crédito e Contrato","indicador":"Tempo de análise do pretendente: 90% analisados em até 30 min","frequencia":"Mensal","meta":0.9,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":0.961},{"item":79,"ugb":"Embalagem","indicador":"100% da verificação do acompanhamento das agendas dos imóveis vagos","frequencia":"Mensal","meta":1,"jan":null,"fev":null,"mar":1,"abr":1,"mai":1,"jun":1},{"item":80,"ugb":"Embalagem","indicador":"100% de sucesso na resolução das ocorrências de chaves","frequencia":"Mensal","meta":1,"jan":null,"fev":null,"mar":1,"abr":1,"mai":1,"jun":1},{"item":85,"ugb":"Embalagem","indicador":"90% das agendas de projetos acompanhadas no mês","frequencia":"Mensal","meta":0.9,"jan":null,"fev":null,"mar":1,"abr":1,"mai":0.9556,"jun":1},{"item":86,"ugb":"Embalagem","indicador":"% de processos concluídos","frequencia":"Mensal","meta":0.37,"jan":0.3372,"fev":0.2747,"mar":0.3204,"abr":0.3509,"mai":0.3363,"jun":0.4812},{"item":87,"ugb":"Embalagem","indicador":"% de imóveis recuperados × imóveis alugados - SJ Morar","frequencia":"Mensal","meta":0.25,"jan":null,"fev":0.3793,"mar":0.4,"abr":0.2836,"mai":0.5217,"jun":0.5606},{"item":88,"ugb":"Embalagem","indicador":"% de imóveis recuperados × imóveis alugados - SJ Negócios","frequencia":"Mensal","meta":0.12,"jan":null,"fev":0.3889,"mar":0.15,"abr":0.1944,"mai":0.2564,"jun":0.3636},{"item":90,"ugb":"Estoque","indicador":"Tempo médio de vacância SJ Negócios","frequencia":"Mensal","meta":450,"jan":543,"fev":554,"mar":546,"abr":552,"mai":559,"jun":582},{"item":91,"ugb":"Estoque","indicador":"Tempo médio de vacância SJ Morar","frequencia":"Mensal","meta":120,"jan":189,"fev":187,"mar":203,"abr":189,"mai":201,"jun":196},{"item":92,"ugb":"Estoque","indicador":"Imóveis liberados para locação e não expostos no site","frequencia":"Trimestral","meta":50,"jan":33,"fev":35,"mar":42,"abr":28,"mai":29,"jun":34},{"item":93,"ugb":"Gerência Administrativa","indicador":"Qualidade do laudo de vistoria: 93% de qualidade nos laudos avaliados","frequencia":"Mensal","meta":0.93,"jan":0.94,"fev":0.95,"mar":0.95,"abr":null,"mai":0.93,"jun":0.94},{"item":94,"ugb":"Gerência Administrativa","indicador":"Disponibilidade de agendamento: 93% das vistorias em até 3 dias úteis","frequencia":"Mensal","meta":0.93,"jan":0.9841,"fev":0.9831,"mar":0.9604,"abr":0.7165,"mai":0.895,"jun":0.9355},{"item":95,"ugb":"Gerência Administrativa","indicador":"Satisfação do cliente: 95% de satisfação durante a vistoria","frequencia":"Mensal","meta":0.95,"jan":0.9617,"fev":0.9565,"mar":0.9613,"abr":null,"mai":1,"jun":0.9909},{"item":98,"ugb":"Gerência Administrativa","indicador":"90% de qualidade dos relatórios de inspeção técnica","frequencia":"Mensal","meta":0.9,"jan":1,"fev":1,"mar":1,"abr":null,"mai":0.9,"jun":0.93},{"item":99,"ugb":"Gerência Administrativa","indicador":"MORAR — Qualidade da entrega do imóvel","frequencia":"Mensal","meta":0.45,"jan":0.4598,"fev":0.4189,"mar":0.4533,"abr":0.4643,"mai":0.4342,"jun":0.4714},{"item":100,"ugb":"Gerência Administrativa","indicador":"MORAR — Velocidade de disponibilidade do imóvel","frequencia":"Mensal","meta":6,"jan":5.63,"fev":3.71,"mar":6.46,"abr":3.93,"mai":5,"jun":4.22},{"item":106,"ugb":"Gerência de Atendimento","indicador":"80% das demandas do SAC solucionadas no prazo","frequencia":"Mensal","meta":0.8,"jan":0.9882,"fev":1,"mar":0.935,"abr":0.9041,"mai":0.9242,"jun":0.8965},{"item":108,"ugb":"Gerência de Atendimento","indicador":"92% de imóveis ocupados com titularidade de água em nome do locatário","frequencia":"Mensal","meta":0.92,"jan":0.9231,"fev":1,"mar":1,"abr":1,"mai":1,"jun":0.9474},{"item":109,"ugb":"Gerência de Atendimento","indicador":"100% de encerramento contratual de energia em 5 dias úteis","frequencia":"Mensal","meta":1,"jan":1,"fev":1,"mar":1,"abr":1,"mai":1,"jun":1},{"item":117,"ugb":"Gerência de Contas","indicador":"92% de imóveis ocupados com titularidade de água em nome do locatário","frequencia":"Mensal","meta":0.92,"jan":0.9231,"fev":1,"mar":1,"abr":1,"mai":1,"jun":0.9474},{"item":118,"ugb":"Gerência de Contas","indicador":"100% de encerramento contratual de energia em 5 dias úteis","frequencia":"Mensal","meta":1,"jan":1,"fev":1,"mar":1,"abr":1,"mai":1,"jun":1},{"item":119,"ugb":"Gerência de Contas","indicador":"92% de imóveis ocupados com titularidade de energia em nome do locatário","frequencia":"Mensal","meta":0.92,"jan":0.9744,"fev":0.9889,"mar":0.9898,"abr":0.9643,"mai":1,"jun":0.9759},{"item":120,"ugb":"Gerência de Contas","indicador":"% de Protesto","frequencia":"Mensal","meta":0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":121,"ugb":"Gerência de Contas","indicador":"% das verificações de débitos de desocupação","frequencia":"Mensal","meta":0.98,"jan":1,"fev":1,"mar":1,"abr":0.991,"mai":0.98,"jun":0.98},{"item":122,"ugb":"Gerência de Contas","indicador":"% de Atualização dos Prédios","frequencia":"Trimestral","meta":1,"jan":null,"fev":null,"mar":1,"abr":null,"mai":null,"jun":0.99},{"item":123,"ugb":"Gerência de Contas","indicador":"% de Notificações fechadas no mês","frequencia":"Mensal","meta":0.8,"jan":null,"fev":null,"mar":1,"abr":0.847,"mai":0.905,"jun":0.715},{"item":124,"ugb":"IMDEX","indicador":"Taxa de Publicação dos Imóveis","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":125,"ugb":"IMDEX","indicador":"Taxa de Conversão dos Destaques OLX","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":126,"ugb":"IMDEX","indicador":"Índice de Qualidade dos Anúncios","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":128,"ugb":"IPTU","indicador":"% dos imóveis residenciais sem débito de IPTU","frequencia":"Mensal","meta":0.98,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1,"jun":1},{"item":129,"ugb":"IPTU","indicador":"% dos imóveis comerciais sem débito de IPTU","frequencia":"Mensal","meta":0.98,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1,"jun":1},{"item":130,"ugb":"IPTU","indicador":"% dos imóveis comerciais com IPTU regular e sem divergências cadastrais","frequencia":"Mensal","meta":0.95,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.9506,"jun":0.9507},{"item":131,"ugb":"Seguro Incêndio","indicador":"% dos imóveis locados com apólices ativas","frequencia":"Mensal","meta":0.99,"jan":0.9931,"fev":0.9931,"mar":0.993,"abr":0.9915,"mai":0.9942,"jun":0.9912},{"item":132,"ugb":"Seguro Incêndio","indicador":"% Nota do QSE — Qualidade, Satisfação e Eficiência","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":133,"ugb":"Seguro Incêndio","indicador":"% dos imóveis residenciais locados com apólices ativas","frequencia":"Mensal","meta":0,"jan":null,"fev":null,"mar":null,"abr":0.9956,"mai":0.9954,"jun":0.9958}];
+
+
+const DATA_READI = [{"item":1,"ugb":"Cuido de Clientes","indicador":"Faturamento mensal","frequencia":"Mensal","meta":273196.69,"jan":112571.45,"fev":319343.61,"mar":112452.68,"abr":118246.85,"mai":0.0,"jun":445677.76},{"item":2,"ugb":"Cuido de Clientes","indicador":"Faturamento mensal de RECOMPRA","frequencia":"Mensal","meta":216933.5,"jan":70460.0,"fev":304888.51,"mar":81061.59,"abr":104223.55,"mai":0.0,"jun":300667.47},{"item":3,"ugb":"Cuido de Clientes","indicador":"Percentual de orçamentos de AQUISIÇÃO criados em até 24h","frequencia":"Mensal","meta":0.7,"jan":0.0,"fev":0.8,"mar":0.9,"abr":0.94,"mai":0.88,"jun":0.73},{"item":4,"ugb":"Cuido de Clientes","indicador":"Percentual de orçamentos de RECOMPRA criados em até 3h","frequencia":"Mensal","meta":0.7,"jan":0.0,"fev":0.33,"mar":0.88,"abr":0.92,"mai":0.96,"jun":0.67},{"item":5,"ugb":"Cuido de Clientes","indicador":"Percentual de pedidos abertos em até 24h","frequencia":"Mensal","meta":0.8,"jan":0.0,"fev":0.57,"mar":0.95,"abr":0.86,"mai":0.8,"jun":0.9166},{"item":6,"ugb":"Cuido de Clientes","indicador":"Quantidade de novos clientes B2B","frequencia":"Mensal","meta":3.0,"jan":1.0,"fev":0.0,"mar":0.0,"abr":0.0,"mai":1.0,"jun":1.0},{"item":7,"ugb":"Cuido de Clientes","indicador":"Quantidade de prospecções ativas","frequencia":"Mensal","meta":40.0,"jan":13.0,"fev":6.0,"mar":66.0,"abr":65.0,"mai":62.0,"jun":2.0},{"item":8,"ugb":"Cuido de Docs","indicador":"CUMPRIMENTO DO CRONOGRAMA DE ENTREGAS - DOC EXTERNO","frequencia":"Mensal","meta":0.8,"jan":0.9056,"fev":0.8888,"mar":0.8358,"abr":0.8837,"mai":0.8333,"jun":0.8182},{"item":9,"ugb":"Cuido de Docs","indicador":"CUMPRIMENTO DO CRONOGRAMA DE ENTREGAS - DOC INTERNO","frequencia":"Mensal","meta":0.9,"jan":0.923,"fev":0.9615,"mar":0.9444,"abr":1.0,"mai":0.745,"jun":0.8519},{"item":10,"ugb":"Cuido de Docs","indicador":"Pesquisa de satisfação","frequencia":"Mensal","meta":4.0,"jan":0.0,"fev":0.0,"mar":0.0,"abr":5.0,"mai":5.0,"jun":5.0},{"item":11,"ugb":"Cuido de Finanças","indicador":"100% Cumprimento das Parcelas Financeiras dos Contratos Firmados","frequencia":"Mensal","meta":0.9,"jan":0.909,"fev":0.9166,"mar":0.98,"abr":1.0,"mai":0.0,"jun":0.0},{"item":12,"ugb":"Cuido de Licenças","indicador":"Percentual de atualização dos status do cliente, no mínimo, 1 vez por mês.","frequencia":"Mensal","meta":0.9,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":13,"ugb":"Cuido de Licenças","indicador":"Pesquisa de satisfação","frequencia":"Mensal","meta":4.0,"jan":0.0,"fev":0.0,"mar":0.0,"abr":0.0,"mai":4.0,"jun":0.0},{"item":14,"ugb":"Cuido de Licenças","indicador":"Regularização - Percentual de estratégia concluída em até 5 dias úteis","frequencia":"Mensal","meta":80.0,"jan":0.0,"fev":0.0,"mar":0.0,"abr":100.0,"mai":0.0,"jun":0.0},{"item":15,"ugb":"Cuido de Precificação","indicador":"Percentual de descartes de negociação por preço","frequencia":"Mensal","meta":0.1,"jan":0.0,"fev":0.06,"mar":0.0,"abr":0.06,"mai":0.0,"jun":0.0},{"item":16,"ugb":"Cuido de Precificação","indicador":"Percentual de vendas acima da alçada","frequencia":"Mensal","meta":0.1,"jan":0.07,"fev":0.0,"mar":0.2,"abr":0.1,"mai":0.1,"jun":0.0},{"item":17,"ugb":"Cuido de Produtos","indicador":"MATHEUS - Garantir que 80% das histórias solicitadas para a tech sejam entreguem com conformidade.","frequencia":"Mensal","meta":0.8,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":0.95,"jun":0.0},{"item":18,"ugb":"Cuido de Produtos","indicador":"MATHEUS - Percentual de validações de histórias antes da review","frequencia":"Mensal","meta":0.9,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":0.0,"jun":0.0},{"item":19,"ugb":"Cuido de Produtos","indicador":"Percentual de cumprimento dos prazos estabelecidos nos cronogramas dos projetos","frequencia":"Mensal","meta":0.9,"jan":1.0,"fev":0.6,"mar":0.73,"abr":1.0,"mai":0.0,"jun":0.0},{"item":20,"ugb":"Cuido de Produtos","indicador":"Percentual de variação no escopo dos projetos.","frequencia":"Mensal","meta":0.3,"jan":0.0,"fev":0.0,"mar":0.0,"abr":0.1,"mai":0.0,"jun":0.0},{"item":21,"ugb":"Cuido de Produtos","indicador":"RAMON - Garantir que 80% das histórias solicitadas para a tech sejam entreguem com conformidade.","frequencia":"Mensal","meta":0.8,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":0.0,"jun":0.0},{"item":22,"ugb":"Cuido de Produtos","indicador":"RAMON - Percentual de validações de histórias antes da review","frequencia":"Mensal","meta":0.9,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":0.0,"jun":0.0},{"item":23,"ugb":"Cuido de Regularização","indicador":"Percentual de atualização dos status do cliente, no mínimo, 1 vez por mês.","frequencia":"Mensal","meta":0.95,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":24,"ugb":"Cuido de Regularização","indicador":"Pesquisa de satisfação","frequencia":"Mensal","meta":4.0,"jan":0.0,"fev":0.0,"mar":0.0,"abr":5.0,"mai":5.0,"jun":4.5},{"item":25,"ugb":"Cuido de Regularização","indicador":"Regularizações finalizadas dentro do prazo previsto","frequencia":"Mensal","meta":0.7,"jan":0.0,"fev":0.0,"mar":0.0,"abr":0.879,"mai":0.947,"jun":0.8103},{"item":26,"ugb":"Cuido de Regularização","indicador":"Regularização - Percentual de estratégia concluída em até 5 dias úteis","frequencia":"Mensal","meta":0.85,"jan":0.875,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":0.88},{"item":27,"ugb":"Cuido de Regularização","indicador":"Regularização - Squad B2B - Conclusão de regularizações 15 por mês","frequencia":"Mensal","meta":1.0,"jan":0.4,"fev":1.0,"mar":1.0,"abr":1.0,"mai":0.0,"jun":0.6},{"item":28,"ugb":"Cuido de Regularização","indicador":"Regularização - Squad B2C - Conclusão de regularizações 05 por mês","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":0.6,"mai":1.0,"jun":1.0},{"item":29,"ugb":"Cuido de Regularização","indicador":"Regularização - Squad Incorporadora - Conclusão de regularizações 10 por mês","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":0.4,"mar":1.0,"abr":1.0,"mai":0.8,"jun":1.0},{"item":30,"ugb":"Cuido de Regularização","indicador":"Scanner completo - Percentual de scanners completos finalizados em até 9 dias úteis (D-1)","frequencia":"Mensal","meta":0.92,"jan":0.909,"fev":0.7142,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":31,"ugb":"Cuido de Regularização","indicador":"Scanners completos - Percentual de finalizados sem pendência","frequencia":"Mensal","meta":0.95,"jan":0.0,"fev":0.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":32,"ugb":"Cuido de Regularização","indicador":"Scanners Completos finalizados sem pendência","frequencia":"Mensal","meta":0.8,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":33,"ugb":"Cuido de Tech","indicador":"Percentual de cumprimento dos prazos de desenvolvimento das sprints.","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":0.0,"mai":1.0,"jun":1.0},{"item":34,"ugb":"Cuido de Tech","indicador":"Percentual de satisfação dos chamados abertos","frequencia":"Mensal","meta":0.85,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":0.95}];
+
+const DATA_ADV = [{"item":1,"ugb":"Administrativo","indicador":"95% de regularização dos registros no SPC/SERASA em até 48 horas após o pagamento do débito.","frequencia":"Mensal","meta":0.95,"jan":0.9826,"fev":0.9714,"mar":1.0,"abr":1.0,"mai":0.985,"jun":1.0},{"item":2,"ugb":"Assessoria Jurídica","indicador":"90% de prazos de \"Notificação\" concluídos até o dia do prazo estipulado","frequencia":"Mensal","meta":0.8,"jan":1.0,"fev":0.92,"mar":1.0,"abr":0.94,"mai":1.0,"jun":0.72},{"item":3,"ugb":"Contencioso","indicador":"65% dos mandados cumpridos com êxito no período de 30 dias nas ações de despejo, incluindo os casos de clientes externos.","frequencia":"Mensal","meta":0.65,"jan":0.0,"fev":0.66,"mar":0.5,"abr":0.0,"mai":0.0,"jun":1.0},{"item":4,"ugb":"Contencioso","indicador":"65% dos mandados cumpridos com êxito no período de 30 dias nas ações de execução, cobrança e indenização da SJ, bem como de clientes externos.","frequencia":"Mensal","meta":0.65,"jan":0.66,"fev":0.75,"mar":0.6,"abr":0.0,"mai":0.0,"jun":0.7678},{"item":5,"ugb":"Contencioso","indicador":"70% dos atendimentos agendados no 2º grau, para despacho dos recursos interpostos pelo Escritório (medição: trimestral)","frequencia":"Mensal","meta":0.7,"jan":0.75,"fev":0.0,"mar":0.8,"abr":0.0,"mai":0.0,"jun":0.8135},{"item":6,"ugb":"Contencioso","indicador":"80% de eventos SLA cumpridos até a data estipulada","frequencia":"Mensal","meta":0.8,"jan":0.89,"fev":0.88,"mar":0.96,"abr":0.97,"mai":0.96,"jun":0.96},{"item":7,"ugb":"Contencioso","indicador":"80% de eventos de Tarefa cumpridos até a data estipulada","frequencia":"Mensal","meta":0.8,"jan":0.9,"fev":0.94,"mar":0.94,"abr":0.97,"mai":0.94,"jun":0.94},{"item":8,"ugb":"Contencioso","indicador":"82% de ações atualizadas nos últimos 30 dias","frequencia":"Mensal","meta":0.75,"jan":0.89,"fev":0.62,"mar":0.82,"abr":0.83,"mai":0.84,"jun":0.7},{"item":9,"ugb":"Contencioso","indicador":"90% de peças protocoladas com 2 dias antes do prazo fatal.","frequencia":"Mensal","meta":0.8,"jan":0.89,"fev":0.92,"mar":0.92,"abr":0.96,"mai":0.95,"jun":0.95},{"item":10,"ugb":"Contencioso","indicador":"90% Despacho pós-réplica (Jornada do Despejo)","frequencia":"Mensal","meta":0.9,"jan":0.0,"fev":0.0,"mar":0.0,"abr":0.0,"mai":0.0,"jun":1.0},{"item":11,"ugb":"Contencioso","indicador":"Casos resolvidos conforme jornada do despejo (acordo, sentença ou entrega de chaves)","frequencia":"Mensal","meta":0.4,"jan":0.0,"fev":0.0,"mar":0.6,"abr":0.5714,"mai":0.4,"jun":1.0},{"item":12,"ugb":"Contencioso","indicador":"Liminares ou tutelas de urgência concedidas em Ações de Despejo no prazo de 30 dias após o ajuizamento","frequencia":"Mensal","meta":0.65,"jan":0.0,"fev":0.0,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.8461},{"item":13,"ugb":"Controladoria","indicador":"90% de eventos de Tarefa cumpridos até a data estipulada","frequencia":"Mensal","meta":0.8,"jan":1.0,"fev":0.93,"mar":0.91,"abr":1.0,"mai":1.0,"jun":0.91},{"item":14,"ugb":"Controladoria","indicador":"Prazos lançados no 1º dia","frequencia":"Mensal","meta":0.95,"jan":0.0,"fev":0.0,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.996},{"item":15,"ugb":"Negociações","indicador":"90% de recuperação de crédito mês garantido (SJ Cariri)","frequencia":"Mensal","meta":0.9,"jan":0.856,"fev":0.917,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.0},{"item":16,"ugb":"Negociações","indicador":"100% de cumprimento da meta de receita da área.","frequencia":"Mensal","meta":1.0,"jan":1.1246,"fev":0.0,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.0},{"item":17,"ugb":"Negociações","indicador":"15% de contratos finalizados outros débitos","frequencia":"Mensal","meta":0.15,"jan":0.1875,"fev":0.0,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.0},{"item":18,"ugb":"Negociações","indicador":"2,5% de recuperação de contratos rescindidos sem ação.","frequencia":"Mensal","meta":0.025,"jan":0.0259,"fev":0.0229,"mar":0.0244,"abr":0.0211,"mai":0.0264,"jun":0.0246},{"item":19,"ugb":"Negociações","indicador":"35% de recuperação geral do mês não garantido.","frequencia":"Mensal","meta":0.35,"jan":0.368,"fev":0.381,"mar":0.379,"abr":0.399,"mai":0.388,"jun":0.341},{"item":20,"ugb":"Negociações","indicador":"40% Recuperação geral do mês garantido.","frequencia":"Mensal","meta":0.4,"jan":0.52,"fev":0.523,"mar":0.55,"abr":0.584,"mai":0.508,"jun":0.536},{"item":21,"ugb":"Negociações","indicador":"87,5% de recuperação de crédito (SJ Cariri)","frequencia":"Mensal","meta":0.85,"jan":1.0,"fev":1.0,"mar":0.966,"abr":0.978,"mai":0.953,"jun":0.982},{"item":22,"ugb":"Negociações","indicador":"88% da nota de 6Ss.","frequencia":"Mensal","meta":0.88,"jan":0.96,"fev":0.96,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.0},{"item":23,"ugb":"Negociações","indicador":"91% de recuperação cobrança do mês vigente garantido.","frequencia":"Mensal","meta":0.91,"jan":0.982,"fev":0.975,"mar":0.949,"abr":0.987,"mai":0.956,"jun":0.939},{"item":24,"ugb":"Negociações","indicador":"91% de recuperação cobrança do mês vigente não garantido","frequencia":"Mensal","meta":0.91,"jan":0.941,"fev":0.739,"mar":0.969,"abr":0.987,"mai":0.89,"jun":0.98},{"item":25,"ugb":"Negociações","indicador":"Acionar 100% dos sinistros contratos seguro fiança e LOFT até 30 dia de atraso.","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0}];
+
+const DATA_VG = [{"item":1,"ugb":"Contabilidade","indicador":"6S Dresscode e Ambiência","frequencia":"Mensal","meta":0.85,"jan":0.62,"fev":0.0927,"mar":0.9523,"abr":0.07,"mai":0.0,"jun":0.0},{"item":2,"ugb":"Contabilidade","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":0.100005,"mar":1.0,"abr":0.0,"mai":null,"jun":0.0},{"item":3,"ugb":"Contabilidade","indicador":"Compensação das horas extras","frequencia":"Mensal","meta":2.0,"jan":0.0,"fev":0.0,"mar":0.052,"abr":0.118,"mai":0.40008,"jun":0.0},{"item":4,"ugb":"Contabilidade","indicador":"Conciliação das contas contábeis até o dia 13 do mês subsequente","frequencia":"Mensal","meta":0.103,"jan":0.9,"fev":0.1,"mar":0.0,"abr":0.1,"mai":0.0,"jun":0.1},{"item":5,"ugb":"Contabilidade","indicador":"Entrega da DRE contábil até o 5º dia útil","frequencia":"Mensal","meta":0.05,"jan":1.0,"fev":0.103,"mar":0.9,"abr":0.1,"mai":0.190008,"jun":0.0},{"item":6,"ugb":"Contabilidade","indicador":"Entrega de declarações acessórias anuais no prazo","frequencia":"Mensal","meta":0.0,"jan":0.0,"fev":0.06,"mar":0.0,"abr":0.0,"mai":2.0,"jun":2.33},{"item":7,"ugb":"Contabilidade","indicador":"Entrega de declarações acessórias mensais no prazo","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":0.100005,"mar":1.0,"abr":0.0,"mai":null,"jun":0.0},{"item":8,"ugb":"Contabilidade","indicador":"Qualidade das informações contábeis","frequencia":"Mensal","meta":0.0,"jan":0.0,"fev":0.0,"mar":0.0,"abr":0.0,"mai":0.09,"jun":0.0},{"item":9,"ugb":"Controladoria - VG","indicador":"6S Dresscode e Ambiência","frequencia":"Mensal","meta":0.47,"jan":0.9047,"fev":0.0,"mar":0.0,"abr":2.0,"mai":0.0,"jun":0.048},{"item":10,"ugb":"Controladoria - VG","indicador":"Cálculo e envio dos indicadores orçamentários até o 7º dia útil do mês subsequente","frequencia":"Mensal","meta":1.0,"jan":1.05,"fev":1.2,"mar":0.10008,"abr":0.056,"mai":0.0,"jun":1.0},{"item":11,"ugb":"Controladoria - VG","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.0,"jan":1.0,"fev":1.008,"mar":0.0,"abr":0.8,"mai":0.0807,"jun":0.8},{"item":12,"ugb":"Controladoria - VG","indicador":"Cumprimento da margem de custo por Quarto Disponível","frequencia":"Mensal","meta":0.1,"jan":0.0,"fev":0.658,"mar":0.7121,"abr":0.77,"mai":0.55,"jun":0.106},{"item":13,"ugb":"Controladoria - VG","indicador":"Cumprimento da margem de custos totais","frequencia":"Mensal","meta":0.076,"jan":0.05258,"fev":0.51,"mar":2.52,"abr":2.31,"mai":0.55,"jun":0.07},{"item":14,"ugb":"Controladoria - VG","indicador":"Entrega e análise gerencial DRE até o 5º dia útil do mês subsequente","frequencia":"Mensal","meta":0.100008,"jan":0.96,"fev":0.05,"mar":0.0,"abr":1.008,"mai":0.0,"jun":0.081},{"item":15,"ugb":"Controladoria - VG","indicador":"Fechamento dos custos mensais entregue até o 3º dia útil do mês subsequente (CMV)","frequencia":"Mensal","meta":0.95,"jan":0.1,"fev":1.008,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.8},{"item":16,"ugb":"Controladoria - VG","indicador":"Projeção de fluxo de caixa mensal até o dia 5 do mês vigente","frequencia":"Mensal","meta":0.0,"jan":0.1,"fev":0.06,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.125},{"item":17,"ugb":"Controladoria - VG","indicador":"Resultado orçamentário da Administração Geral","frequencia":"Mensal","meta":0.5805,"jan":0.9579,"fev":0.0,"mar":0.07,"abr":0.06,"mai":0.0,"jun":0.4987},{"item":18,"ugb":"Coord. Receita e Distribuição","indicador":"6S Dresscode e Ambiência","frequencia":"Mensal","meta":0.0,"jan":1.0,"fev":1.008,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.0},{"item":19,"ugb":"Coord. Receita e Distribuição","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":1.08,"jan":1.2,"fev":0.120208,"mar":0.1,"abr":0.1,"mai":1.002,"jun":0.0},{"item":20,"ugb":"Coord. Receita e Distribuição","indicador":"Cumprimento da Diária Média","frequencia":"Mensal","meta":0.6,"jan":0.0,"fev":0.06,"mar":0.0,"abr":0.0,"mai":0.29,"jun":0.45},{"item":21,"ugb":"Coord. Receita e Distribuição","indicador":"Cumprimento da Receita de Hospedagem","frequencia":"Mensal","meta":0.07,"jan":0.1607,"fev":0.55405,"mar":2.0,"abr":0.0,"mai":0.0,"jun":0.97759},{"item":22,"ugb":"Cozinha","indicador":"CMV de insumos","frequencia":"Mensal","meta":0.0,"jan":0.0907,"fev":0.0,"mar":0.0,"abr":0.08,"mai":0.0,"jun":0.1333},{"item":23,"ugb":"Cozinha","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.1,"jan":0.100005,"fev":1.0,"mar":0.0,"abr":0.0807,"mai":0.0,"jun":0.8},{"item":24,"ugb":"Cozinha","indicador":"Compensação das horas extras","frequencia":"Mensal","meta":1.2,"jan":0.16,"fev":0.0,"mar":0.06,"abr":0.0,"mai":2.08,"jun":1.2},{"item":25,"ugb":"Cozinha","indicador":"Redução das horas negativas","frequencia":"Mensal","meta":0.78,"jan":0.0,"fev":0.0,"mar":0.09,"abr":0.0,"mai":0.0,"jun":0.09},{"item":26,"ugb":"Cozinha","indicador":"Resultado orçamentário da Cozinha e Restaurante","frequencia":"Mensal","meta":0.0,"jan":0.0,"fev":0.06,"mar":0.0,"abr":0.0,"mai":0.08,"jun":0.0},{"item":27,"ugb":"Departamento de Pessoal","indicador":"6S Dresscode e Ambiência","frequencia":"Mensal","meta":0.68,"jan":1.0,"fev":0.0,"mar":0.9529,"abr":0.9529,"mai":0.0671,"jun":0.0},{"item":28,"ugb":"Departamento de Pessoal","indicador":"Atendimento da legislação ambiental","frequencia":"Mensal","meta":0.100005,"jan":1.008,"fev":0.0,"mar":0.08,"abr":0.0,"mai":0.8,"jun":0.80008},{"item":29,"ugb":"Departamento de Pessoal","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.1,"jan":0.0,"fev":0.19,"mar":0.6,"abr":0.06,"mai":0.8669,"jun":0.0},{"item":30,"ugb":"Departamento de Pessoal","indicador":"Cumprimento do Orçamento: DESPESAS COM PESSOAL","frequencia":"Mensal","meta":0.1,"jan":0.84,"fev":0.0266,"mar":0.1394,"abr":0.9053,"mai":0.098,"jun":0.0},{"item":31,"ugb":"Departamento de Pessoal","indicador":"Elaborar encargos sociais enviados sem erros","frequencia":"Mensal","meta":0.1,"jan":0.04,"fev":1.0,"mar":0.1,"abr":0.1,"mai":0.1,"jun":0.100005},{"item":32,"ugb":"Departamento de Pessoal","indicador":"Elaborar os pedidos de benefícios sem erros","frequencia":"Mensal","meta":0.0,"jan":0.0,"fev":0.1,"mar":0.0,"abr":0.0,"mai":0.2,"jun":0.0},{"item":33,"ugb":"Departamento de Pessoal","indicador":"Entrega dos benefícios para pagamento 5 dias antes da entrega do benefício ao colaborador","frequencia":"Mensal","meta":0.0,"jan":1.08,"fev":0.06,"mar":1.0,"abr":0.1,"mai":0.1,"jun":0.100005},{"item":34,"ugb":"Departamento de Pessoal","indicador":"Entregar 100% dos encargos sociais para pagamento em até 1 dia antes do vencimento","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.08,"mar":0.1,"abr":0.0,"mai":1.0,"jun":0.1},{"item":35,"ugb":"Departamento de Pessoal","indicador":"Folha de pagamentos sem erros","frequencia":"Mensal","meta":0.1,"jan":0.0,"fev":0.66,"mar":0.0,"abr":0.08,"mai":0.06,"jun":0.5},{"item":36,"ugb":"Financeiro","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.103,"jan":0.0,"fev":0.19,"mar":0.0,"abr":0.1,"mai":0.0,"jun":0.1},{"item":37,"ugb":"Financeiro","indicador":"Conciliação bancária realizada até o 3º dia útil do mês subsequente","frequencia":"Mensal","meta":0.1,"jan":0.0,"fev":0.1,"mar":0.0,"abr":1.0,"mai":0.05,"jun":0.058},{"item":38,"ugb":"Financeiro","indicador":"Envio do fluxo de caixa semanal","frequencia":"Mensal","meta":0.1,"jan":0.0,"fev":1.089,"mar":1.9,"abr":0.100005,"mai":1.0,"jun":0.1},{"item":39,"ugb":"Financeiro","indicador":"Faturamento realizado em até 3 (três) dias úteis após o encerramento da conta","frequencia":"Mensal","meta":3.0,"jan":0.0,"fev":1.0,"mar":0.61,"abr":0.100008,"mai":0.1,"jun":0.0},{"item":40,"ugb":"Financeiro","indicador":"Índice de inadimplência acumulada","frequencia":"Mensal","meta":0.308,"jan":0.03,"fev":0.03,"mar":0.0602,"abr":0.02,"mai":0.0,"jun":1.0},{"item":41,"ugb":"Financeiro","indicador":"Pagamentos realizados no prazo","frequencia":"Mensal","meta":0.180005,"jan":0.9956,"fev":0.05,"mar":0.09,"abr":0.0,"mai":0.09,"jun":0.98},{"item":42,"ugb":"Financeiro","indicador":"Recebimento das notas fiscais de comissão descontadas na fatura recebidas até o 5º dia útil do mês subsequente","frequencia":"Mensal","meta":0.0,"jan":0.06,"fev":0.0,"mar":0.6,"abr":0.09,"mai":0.0,"jun":0.24008},{"item":43,"ugb":"Financeiro","indicador":"Redução das horas negativas","frequencia":"Mensal","meta":1.0609,"jan":0.04,"fev":0.0,"mar":0.06,"abr":0.0,"mai":0.866,"jun":0.0},{"item":44,"ugb":"Gente e Gestão","indicador":"6S Dresscode e Ambiência","frequencia":"Mensal","meta":4.0,"jan":0.01,"fev":0.0,"mar":0.06,"abr":0.0,"mai":0.866,"jun":0.0},{"item":45,"ugb":"Gente e Gestão","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.04,"jan":1.0,"fev":1.0,"mar":0.10005,"abr":0.1,"mai":0.100005,"jun":0.1008},{"item":46,"ugb":"Gente e Gestão","indicador":"Qualidade das seleções: efetivação após 90 dias","frequencia":"Mensal","meta":0.0,"jan":0.1,"fev":0.1,"mar":1.008,"abr":0.0,"mai":0.08,"jun":0.8},{"item":47,"ugb":"Gerência de Vendas","indicador":"Cumprimento da Taxa de Ocupação","frequencia":"Mensal","meta":0.0,"jan":0.0,"fev":0.06,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.0},{"item":48,"ugb":"Governança","indicador":"Apartamentos aprovados na primeira inspeção de limpeza, arrumação e amenidades","frequencia":"Mensal","meta":0.410009,"jan":1.0,"fev":1.9,"mar":0.100008,"abr":1.0,"mai":1.0,"jun":0.1},{"item":49,"ugb":"Governança","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.1,"jan":0.0,"fev":0.12,"mar":0.0,"abr":0.100008,"mai":0.1,"jun":0.0},{"item":50,"ugb":"Governança","indicador":"Resultado orçamentário fixo da Governança","frequencia":"Mensal","meta":0.09,"jan":0.0,"fev":0.19,"mar":0.0605,"abr":0.603,"mai":0.0,"jun":0.8978},{"item":51,"ugb":"Governança","indicador":"Resultado orçamentário variável da Governança","frequencia":"Mensal","meta":0.746,"jan":0.6778,"fev":0.75,"mar":0.0508,"abr":1.062,"mai":0.0,"jun":2.0},{"item":52,"ugb":"Governança","indicador":"Satisfação dos clientes com a Governança - GUEST","frequencia":"Mensal","meta":0.0,"jan":0.0,"fev":0.0,"mar":0.6,"abr":0.09,"mai":0.0,"jun":0.23},{"item":53,"ugb":"Grupos e Eventos","indicador":"6S Dresscode e Ambiência","frequencia":"Mensal","meta":0.9047,"jan":0.42,"fev":0.5523,"mar":0.0,"abr":0.0,"mai":0.06,"jun":0.6},{"item":54,"ugb":"Grupos e Eventos","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.0,"jan":1.08,"fev":0.1,"mar":0.100005,"abr":1.0,"mai":1.0,"jun":1.0},{"item":55,"ugb":"Grupos e Eventos","indicador":"Cumprimento de valor faturado de A&B em Eventos","frequencia":"Mensal","meta":0.1,"jan":0.0,"fev":0.07,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.0},{"item":56,"ugb":"Grupos e Eventos","indicador":"Cumprimento do faturamento de aluguel de sala e equipamentos em eventos","frequencia":"Mensal","meta":0.100131,"jan":0.525,"fev":0.82,"mar":0.55,"abr":0.234554,"mai":0.143216,"jun":0.0},{"item":57,"ugb":"Grupos e Eventos","indicador":"Nota de Avaliação do QSE","frequencia":"Mensal","meta":0.9,"jan":0.04,"fev":0.0,"mar":0.0,"abr":0.0,"mai":1.0,"jun":0.0},{"item":58,"ugb":"Grupos e Eventos","indicador":"Redução de 20% das horas extras da UGB","frequencia":"Mensal","meta":0.2,"jan":0.06,"fev":0.0,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.0},{"item":59,"ugb":"Grupos e Eventos","indicador":"Resultado orçamentário de Eventos","frequencia":"Mensal","meta":0.0,"jan":0.0,"fev":0.0,"mar":0.0,"abr":0.0,"mai":0.06,"jun":0.0},{"item":60,"ugb":"Grupos e Eventos","indicador":"Satisfação do cliente com o coffee break - GUEST","frequencia":"Mensal","meta":3.0,"jan":0.1,"fev":0.0,"mar":1.2,"abr":0.100008,"mai":0.1,"jun":0.0},{"item":61,"ugb":"Manutenção","indicador":"(VERDEGREEN) 6S Dresscode e Ambiência","frequencia":"Mensal","meta":0.65,"jan":0.85,"fev":0.0,"mar":0.07,"abr":0.9525,"mai":0.2,"jun":0.0},{"item":62,"ugb":"Manutenção","indicador":"(VERDEGREEN) 95% Cumprimento das manutenções preventivas","frequencia":"Mensal","meta":0.95,"jan":0.0,"fev":0.37,"mar":0.7,"abr":0.0,"mai":0.33648,"jun":0.72},{"item":63,"ugb":"Manutenção","indicador":"(VERDEGREEN) 100% Coleta Seletiva","frequencia":"Mensal","meta":0.105,"jan":0.0,"fev":1.2,"mar":0.100008,"abr":0.108,"mai":0.0,"jun":0.1},{"item":64,"ugb":"Manutenção","indicador":"(VERDEGREEN) 100% Resultado orçamentário fixo da Manutenção","frequencia":"Mensal","meta":0.0919,"jan":0.0972,"fev":0.01,"mar":1.59,"abr":0.052,"mai":0.0,"jun":0.0},{"item":65,"ugb":"Manutenção","indicador":"(VERDEGREEN) 100% Resultado orçamentário variável da Manutenção","frequencia":"Mensal","meta":0.06,"jan":2.27,"fev":0.11785,"mar":0.125,"abr":0.12511,"mai":1.08,"jun":0.08},{"item":66,"ugb":"Manutenção","indicador":"(VERDEGREEN) 20% Compensação das horas extras","frequencia":"Mensal","meta":0.2,"jan":0.2,"fev":0.2,"mar":1.0,"abr":0.228,"mai":0.05,"jun":0.0},{"item":67,"ugb":"Manutenção","indicador":"(VERDEGREEN) 70% Nota de avaliação dos fornecedores críticos","frequencia":"Mensal","meta":0.06,"jan":0.06,"fev":0.0,"mar":0.06,"abr":0.0,"mai":0.06,"jun":4.0},{"item":68,"ugb":"Manutenção","indicador":"(VERDEGREEN) 70% Nota de seleção dos fornecedores críticos","frequencia":"Mensal","meta":0.0,"jan":0.6905,"fev":0.0,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.0},{"item":69,"ugb":"Manutenção","indicador":"(VERDEGREEN) 90% Satisfação dos clientes com a Manutenção - GUEST","frequencia":"Mensal","meta":0.9,"jan":0.9,"fev":0.08,"mar":0.85,"abr":0.87,"mai":0.087,"jun":0.0},{"item":70,"ugb":"Manutenção","indicador":"(VERDEGREEN) 95% Cumprimento das manutenções corretivas","frequencia":"Mensal","meta":3.0,"jan":0.0,"fev":0.100008,"mar":1.0,"abr":3.0,"mai":0.0,"jun":0.35},{"item":71,"ugb":"Manutenção","indicador":"(VERDEGREEN) Tempo de atendimento - SLA","frequencia":"Mensal","meta":0.0,"jan":1.0,"fev":0.2,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.0},{"item":72,"ugb":"Marketing","indicador":"% de ações (eventos, experiências, parcerias) com captação completa","frequencia":"Mensal","meta":0.0,"jan":0.0,"fev":0.0,"mar":0.0,"abr":1.008,"mai":0.0,"jun":0.08},{"item":73,"ugb":"Marketing","indicador":"% de ações locais (parcerias, eventos, experiências) viabilizadas e realizadas conforme planejamento","frequencia":"Mensal","meta":0.0,"jan":0.0,"fev":0.0,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.6008},{"item":74,"ugb":"Marketing","indicador":"% de demandas com briefing completo e sem retrabalho relevante","frequencia":"Mensal","meta":0.85,"jan":0.0,"fev":0.06,"mar":0.4,"abr":0.0,"mai":0.06,"jun":0.0},{"item":75,"ugb":"Marketing","indicador":"6S Dresscode e Ambiência","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":0.0,"mar":0.06,"abr":0.0,"mai":0.8,"jun":0.0},{"item":76,"ugb":"Marketing","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":1.0,"jan":0.0,"fev":0.0,"mar":0.0,"abr":0.0,"mai":0.06,"jun":0.0},{"item":77,"ugb":"Marketing","indicador":"Compensação das horas extras","frequencia":"Mensal","meta":0.2,"jan":0.08,"fev":0.0,"mar":0.0,"abr":0.0,"mai":3.4,"jun":0.0},{"item":78,"ugb":"Recepção","indicador":"6S Dresscode e Ambiência","frequencia":"Mensal","meta":1.08,"jan":0.062,"fev":0.0,"mar":0.06,"abr":0.0,"mai":0.0,"jun":0.06},{"item":79,"ugb":"Recepção","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.0,"jan":1.08,"fev":0.1,"mar":0.180005,"abr":0.1,"mai":0.084,"jun":0.1},{"item":80,"ugb":"Recepção","indicador":"Nota de Avaliação do QSE","frequencia":"Mensal","meta":1.05,"jan":1.0,"fev":0.0533,"mar":0.1,"abr":0.0,"mai":0.100008,"jun":1.0},{"item":81,"ugb":"Recepção","indicador":"Resultado orçamentário - Hospedagem","frequencia":"Mensal","meta":0.1,"jan":0.97,"fev":0.02,"mar":0.9721,"abr":0.6309,"mai":2.51,"jun":0.0},{"item":82,"ugb":"Recepção","indicador":"Venda de Late Check-Out","frequencia":"Mensal","meta":100.08,"jan":905.25,"fev":1.0,"mar":8.0,"abr":85.0,"mai":0.0,"jun":0.0},{"item":83,"ugb":"Recepção","indicador":"Vendas diretas na Recepção","frequencia":"Mensal","meta":30.0,"jan":52024.0,"fev":5.0,"mar":2.0,"abr":0.0,"mai":0.0,"jun":6.0},{"item":84,"ugb":"Reservas","indicador":"6S Dresscode e Ambiência","frequencia":"Mensal","meta":0.0,"jan":4.0,"fev":0.27,"mar":0.9527,"abr":0.06,"mai":0.4,"jun":0.66},{"item":85,"ugb":"Reservas","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.108007,"jan":1.0,"fev":1.202,"mar":1.0,"abr":0.100008,"mai":0.1008,"jun":0.0},{"item":86,"ugb":"Reservas","indicador":"Cumprimento da Receita de Hospedagem","frequencia":"Mensal","meta":2.06,"jan":0.09,"fev":0.252768,"mar":0.127463,"abr":0.107654,"mai":0.085369,"jun":0.070955},{"item":87,"ugb":"Reservas","indicador":"Eficácia na conferência das reservas","frequencia":"Mensal","meta":0.105,"jan":0.0,"fev":0.0,"mar":0.0,"abr":1.03,"mai":0.06,"jun":0.0866},{"item":88,"ugb":"Reservas","indicador":"Nota de Avaliação do QSE","frequencia":"Mensal","meta":0.6,"jan":0.0,"fev":0.108007,"mar":1.0,"abr":1.202,"mai":1.0,"jun":0.100008},{"item":89,"ugb":"Reservas","indicador":"Ocupação nas Suítes Executivas","frequencia":"Mensal","meta":0.0645,"jan":1.66,"fev":0.0,"mar":0.09,"abr":0.0,"mai":0.0,"jun":0.09},{"item":90,"ugb":"Reservas","indicador":"Satisfação dos clientes com Reservas - GUEST","frequencia":"Mensal","meta":1.0,"jan":0.0,"fev":0.06,"mar":0.06,"abr":0.866,"mai":0.0,"jun":0.2},{"item":91,"ugb":"Restaurante","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.100005,"jan":1.008,"fev":0.0,"mar":0.08,"abr":0.0,"mai":0.8,"jun":0.8},{"item":92,"ugb":"Restaurante","indicador":"Compensação das horas extras","frequencia":"Mensal","meta":1.0,"jan":2.0,"fev":4.0,"mar":0.06,"abr":0.08,"mai":0.96,"jun":0.64},{"item":93,"ugb":"Restaurante","indicador":"Contas pendentes acumuladas no sistema encerradas em até 5 dias","frequencia":"Mensal","meta":0.108207,"jan":1.0,"fev":0.1202,"mar":0.1,"abr":1.0,"mai":0.1008,"jun":0.0},{"item":94,"ugb":"Restaurante","indicador":"Cumprimento receita de A&B do Citron","frequencia":"Mensal","meta":6.0,"jan":9.0,"fev":22526.0,"mar":7.0,"abr":21.0,"mai":0.0,"jun":36390.63},{"item":95,"ugb":"Restaurante","indicador":"Nota de Avaliação do QSE","frequencia":"Mensal","meta":0.100005,"jan":0.1008,"fev":0.0,"mar":0.08,"abr":0.0,"mai":0.8,"jun":0.8},{"item":96,"ugb":"Restaurante","indicador":"Resultado orçamentário da Cozinha e Restaurante","frequencia":"Mensal","meta":0.10238,"jan":1.06,"fev":0.7,"mar":0.06,"abr":0.08,"mai":0.66,"jun":0.14},{"item":97,"ugb":"Restaurante","indicador":"Satisfação dos clientes com o serviço de Cozinha e Restaurante - GUEST","frequencia":"Mensal","meta":3.0,"jan":0.0,"fev":0.08,"mar":2.0,"abr":0.948,"mai":2.0,"jun":0.07},{"item":98,"ugb":"Restaurante","indicador":"Valores não estornados pelos clientes do Restaurante","frequencia":"Mensal","meta":0.0,"jan":0.06,"fev":0.0,"mar":0.0,"abr":0.08,"mai":0.0,"jun":0.0188},{"item":99,"ugb":"Suprimentos","indicador":"6S Dresscode e Ambiência","frequencia":"Mensal","meta":0.04,"jan":0.02,"fev":0.02,"mar":0.96,"abr":0.1,"mai":0.0,"jun":0.538},{"item":100,"ugb":"Suprimentos","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.0,"jan":0.190008,"fev":1.03,"mar":0.1,"abr":0.0,"mai":1.0,"jun":0.0},{"item":101,"ugb":"Suprimentos","indicador":"Conformidade dos produtos críticos armazenados no almoxarifado de alimentos","frequencia":"Mensal","meta":1.082,"jan":1.2,"fev":0.1902,"mar":0.1,"abr":0.100008,"mai":0.1008,"jun":0.0},{"item":102,"ugb":"Suprimentos","indicador":"Conformidade dos produtos críticos armazenados no almoxarifado de bebidas","frequencia":"Mensal","meta":0.1,"jan":0.04,"fev":1.0,"mar":1.0,"abr":0.1,"mai":0.1,"jun":0.100005},{"item":103,"ugb":"Suprimentos","indicador":"Conformidade dos produtos críticos armazenados no almoxarifado de material de limpeza","frequencia":"Mensal","meta":0.0,"jan":0.04,"fev":0.0,"mar":0.0,"abr":1.0,"mai":0.4,"jun":0.0},{"item":104,"ugb":"Suprimentos","indicador":"Estoque físico conciliado com o sistema (artigos para hóspedes, materiais de limpeza, de expediente, de exploração e de publicidade)","frequencia":"Mensal","meta":0.01,"jan":0.0597,"fev":0.0555,"mar":0.2,"abr":0.06,"mai":0.2,"jun":0.47},{"item":105,"ugb":"Suprimentos","indicador":"Nota de avaliação dos fornecedores críticos","frequencia":"Mensal","meta":0.0,"jan":0.2,"fev":0.5,"mar":0.0,"abr":0.0,"mai":0.0,"jun":0.0},{"item":106,"ugb":"Suprimentos","indicador":"Nota de seleção dos fornecedores críticos","frequencia":"Mensal","meta":0.0,"jan":0.0,"fev":0.0631,"mar":0.066,"abr":0.08,"mai":0.066,"jun":0.6},{"item":107,"ugb":"TI","indicador":"6S Dresscode e Ambiência","frequencia":"Mensal","meta":0.527,"jan":0.0,"fev":0.06,"mar":0.6,"abr":2.07,"mai":0.0,"jun":0.4008},{"item":108,"ugb":"TI","indicador":"Backups realizadas com êxito","frequencia":"Mensal","meta":0.1,"jan":0.0,"fev":0.1,"mar":0.0,"abr":1.0,"mai":1.0,"jun":0.103},{"item":109,"ugb":"TI","indicador":"Coleta Seletiva","frequencia":"Mensal","meta":0.1,"jan":0.1,"fev":1.008,"mar":0.0,"abr":0.08,"mai":0.8,"jun":0.80008},{"item":110,"ugb":"TI","indicador":"Resultado orçamentário fixo da TI","frequencia":"Mensal","meta":0.9,"jan":0.0,"fev":0.06,"mar":0.180005,"abr":0.95,"mai":0.4,"jun":0.0},{"item":111,"ugb":"TI","indicador":"Satisfação no suporte aos usuários","frequencia":"Mensal","meta":0.0,"jan":0.19,"fev":0.0,"mar":0.100008,"abr":0.1,"mai":0.0,"jun":0.100008}];
+
+const DATA_IUA = [{"item":1,"ugb":"Almoxarifado","indicador":"Atingir 85% da nota de auditoria de 6S","frequencia":"Mensal","meta":0.85,"jan":0.9,"fev":0.9,"mar":0.8,"abr":0.85,"mai":0.8,"jun":1.0},{"item":2,"ugb":"Almoxarifado","indicador":"Entrega de requisições fora do prazo <=5%","frequencia":"Mensal","meta":0.05,"jan":null,"fev":null,"mar":null,"abr":0.05,"mai":0.05,"jun":0.038},{"item":3,"ugb":"Almoxarifado","indicador":"Estoque conciliado entre o físico x sistema (exceto hort-frut, aves, carnes, peixes e frios)","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":4,"ugb":"Almoxarifado","indicador":"Produtos de estoque dentro do prazo de validade","frequencia":"Mensal","meta":0.95,"jan":0.95,"fev":0.95,"mar":0.95,"abr":0.988,"mai":0.9597,"jun":0.985},{"item":5,"ugb":"Contabilidade","indicador":"Entrega da DRE contábil até o 4º dia útil","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.95,"jun":1.0},{"item":6,"ugb":"Contabilidade","indicador":"Entrega de declarações acessórias mensais no prazo - Ref. mês anterior","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0,"jun":1.0},{"item":7,"ugb":"Contabilidade","indicador":"Entrega dos Impostos Federais, Estaduais e Municipais para pagamento até o 10º dia útil - Medir 11º dia útil","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":null},{"item":8,"ugb":"Contabilidade","indicador":"Qualidade das informações contábeis","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0,"jun":1.0},{"item":9,"ugb":"Controladoria - IU-Á","indicador":"Até 28% da margem bruta de insumos","frequencia":"Mensal","meta":0.28,"jan":0.2721,"fev":0.2511,"mar":0.2767,"abr":0.2701,"mai":0.2458,"jun":0.315},{"item":10,"ugb":"Controladoria - IU-Á","indicador":"Atingir 85% da nota de auditoria de 6S","frequencia":"Mensal","meta":0.85,"jan":0.95,"fev":0.95,"mar":0.95,"abr":0.95,"mai":0.95,"jun":0.85},{"item":11,"ugb":"Controladoria - IU-Á","indicador":"Atualização das planilhas de controladoria até o 1º dia útil do mês subsequente","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0,"jun":1.0},{"item":12,"ugb":"Controladoria - IU-Á","indicador":"Compensação das horas extras","frequencia":"Mensal","meta":-0.2,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":-0.53},{"item":13,"ugb":"Controladoria - IU-Á","indicador":"Conciliações bancárias realizadas até o 3º dia útil do mês subsequente","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0,"jun":1.0},{"item":14,"ugb":"Controladoria - IU-Á","indicador":"Custo por Quarto Disponível: gastos médios considerando todos os quartos do hotel","frequencia":"Mensal","meta":175.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":162.3,"jun":180.63},{"item":15,"ugb":"Controladoria - IU-Á","indicador":"Custo por Quarto Ocupado: gastos médios apenas com os quartos ocupados","frequencia":"Mensal","meta":330.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":276.68,"jun":386.47},{"item":16,"ugb":"Controladoria - IU-Á","indicador":"Entrega de relatórios da controladoria até o 5º dia útil do mês subsequente","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0,"jun":1.0},{"item":17,"ugb":"Controladoria - IU-Á","indicador":"Entrega e análise gerencial DRE até o 5º dia útil do mês subsequente","frequencia":"Mensal","meta":1.0,"jan":0.9,"fev":0.85,"mar":1.0,"abr":0.9,"mai":0.9,"jun":1.0},{"item":18,"ugb":"Controladoria - IU-Á","indicador":"Fechamento de Custos Mensal entregue até o 3º dia útil do mês subsequente","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":19,"ugb":"Controladoria - IU-Á","indicador":"Projeção de fluxo de caixa até o 25º dia do mês - Medir 26º dia do mês","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0,"jun":1.0},{"item":20,"ugb":"Controladoria - IU-Á","indicador":"Resultado orçamentário da administração geral","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":3.78,"jun":2.43},{"item":21,"ugb":"Cozinha","indicador":"Satisfação dos clientes com cozinha e restaurante - GUEST comment","frequencia":"Mensal","meta":0.93,"jan":0.958,"fev":0.956,"mar":0.96,"abr":0.955,"mai":0.945,"jun":0.963},{"item":22,"ugb":"Cozinha","indicador":"Atingir 85% da nota de auditoria de 6S","frequencia":"Mensal","meta":0.85,"jan":0.95,"fev":0.95,"mar":0.85,"abr":0.85,"mai":0.9,"jun":null},{"item":23,"ugb":"Cozinha","indicador":"CMV de insumos","frequencia":"Mensal","meta":0.28,"jan":0.2721,"fev":0.2511,"mar":0.2788,"abr":0.27,"mai":0.2458,"jun":0.315},{"item":24,"ugb":"Cozinha","indicador":"Compensação das horas extras","frequencia":"Mensal","meta":-0.2,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":-0.11},{"item":25,"ugb":"Eventos","indicador":"Cumprimento de 100% do faturamento de aluguel de sala e equipamentos em eventos","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":0.3244,"abr":1.3737,"mai":2.851,"jun":2.485},{"item":26,"ugb":"Eventos","indicador":"Conversão de orçamentos enviados em eventos realizados","frequencia":"Mensal","meta":0.8,"jan":0.8,"fev":0.8,"mar":0.8,"abr":0.85,"mai":0.8,"jun":1.7},{"item":27,"ugb":"Eventos","indicador":"Satisfação dos clientes com Alimentos e Bebidas","frequencia":"Mensal","meta":0.93,"jan":0.93,"fev":0.93,"mar":0.93,"abr":0.95,"mai":0.945,"jun":0.93},{"item":28,"ugb":"Eventos","indicador":"Satisfação dos clientes com Eventos","frequencia":"Mensal","meta":0.98,"jan":0.98,"fev":0.98,"mar":0.98,"abr":0.99,"mai":0.98,"jun":0.99},{"item":29,"ugb":"Eventos","indicador":"Valores não estornados em eventos","frequencia":"Mensal","meta":0.99,"jan":0.9,"fev":0.98,"mar":0.99,"abr":0.98,"mai":0.99,"jun":0.99},{"item":30,"ugb":"Eventos","indicador":"Atingir 85% da nota de auditoria de 6S","frequencia":"Mensal","meta":0.85,"jan":0.0,"fev":0.85,"mar":0.85,"abr":0.85,"mai":0.75,"jun":0.85},{"item":31,"ugb":"Eventos","indicador":"Cumprimento de 100% do faturamento de A&B em eventos","frequencia":"Mensal","meta":1.0,"jan":0.95,"fev":1.0,"mar":0.4997,"abr":1.3239,"mai":2.5937,"jun":2.2098},{"item":32,"ugb":"Financeiro","indicador":"Conformidade caixa físico x sistema em 100%","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0838,"jun":0.9775},{"item":33,"ugb":"Financeiro","indicador":"Contas a pagar - Conciliações realizadas (p/contabilidade) até 2º dia útil do mês subsequente","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.85,"jun":0.95},{"item":34,"ugb":"Financeiro","indicador":"Contas a receber - Conciliações realizadas (p/contabilidade) até 2º dia útil do mês subsequente","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0,"jun":1.0},{"item":35,"ugb":"Financeiro","indicador":"Faturamento realizado em até 3 dias úteis após o encerramento da conta","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0,"jun":1.0},{"item":36,"ugb":"Financeiro","indicador":"Fluxo de caixa atualizado até o 5º dia útil do mês subsequente - Medir 6º dia útil","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.85,"jun":1.0},{"item":37,"ugb":"Financeiro","indicador":"Índice de inadimplência acumulada de até 0,8%","frequencia":"Mensal","meta":0.008,"jan":0.0001,"fev":0.0001,"mar":0.0002,"abr":0.0003,"mai":0.0001,"jun":0.0001},{"item":38,"ugb":"Financeiro","indicador":"Pagamentos realizados no prazo","frequencia":"Mensal","meta":1.0,"jan":0.9999,"fev":1.0,"mar":0.9998,"abr":1.0,"mai":1.0,"jun":1.0},{"item":39,"ugb":"Financeiro","indicador":"Recebimento das notas fiscais de comissão descontadas na fatura recebidas até 6º dia útil do mês subsequente","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.8,"jun":0.85},{"item":40,"ugb":"Gente e Gestão","indicador":"Agilidade das seleções: 80% realizadas no prazo","frequencia":"Mensal","meta":0.8,"jan":null,"fev":null,"mar":null,"abr":1.0,"mai":null,"jun":1.0},{"item":41,"ugb":"Gente e Gestão","indicador":"Ambiência - 85% na checagem de 6S","frequencia":"Mensal","meta":0.85,"jan":null,"fev":null,"mar":null,"abr":0.9,"mai":0.9,"jun":0.85},{"item":42,"ugb":"Gente e Gestão","indicador":"Qualidade das seleções: efetivação após 90 dias","frequencia":"Mensal","meta":0.8,"jan":null,"fev":null,"mar":null,"abr":1.0,"mai":1.0,"jun":0.6666},{"item":43,"ugb":"Gerência","indicador":"Cumprimento da receita de estacionamento","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":null,"mai":3104.47,"jun":1318.53},{"item":44,"ugb":"Gerência","indicador":"Cumprimento da receita de upselling","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1016.07,"jun":2087.97},{"item":45,"ugb":"Gerência","indicador":"Cumprimento da receita do Restaurante","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":null,"mai":199824.27,"jun":180062.52},{"item":46,"ugb":"Gerência","indicador":"Cumprimento da receita dos Early check-in","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":null,"mai":4699.49,"jun":5634.52},{"item":47,"ugb":"Gerência","indicador":"Cumprimento da receita dos Late Check-out","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":null,"mai":2977.32,"jun":4803.02},{"item":48,"ugb":"Gerência","indicador":"Cumprimento do percentual de lucratividade (GOP)","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.3663,"jun":0.1712},{"item":49,"ugb":"Gerência","indicador":"Custo com Mão de Obra: percentual da folha de pagamento sobre a receita abaixo de 32%","frequencia":"Mensal","meta":0.32,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.2636,"jun":0.3552},{"item":50,"ugb":"Gerência","indicador":"Mínimo de 93 pontos na régua de excelência","frequencia":"Mensal","meta":93.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":97.0,"jun":null},{"item":51,"ugb":"Governança","indicador":"Satisfação dos clientes com a governança","frequencia":"Mensal","meta":0.95,"jan":null,"fev":null,"mar":null,"abr":0.95,"mai":0.79,"jun":0.96},{"item":52,"ugb":"Governança","indicador":"Acuracidade do inventário de enxoval - atingir no mínimo 85%","frequencia":"Mensal","meta":0.85,"jan":null,"fev":null,"mar":null,"abr":0.84,"mai":0.83,"jun":0.81},{"item":53,"ugb":"Governança","indicador":"Atingir 85% da nota de auditoria de 6S","frequencia":"Mensal","meta":0.85,"jan":1.0,"fev":1.0,"mar":0.95,"abr":0.95,"mai":0.9,"jun":0.85},{"item":54,"ugb":"Governança","indicador":"Atingir 90% de apartamentos aprovados na primeira inspeção de limpeza e arrumação","frequencia":"Mensal","meta":0.9,"jan":null,"fev":null,"mar":null,"abr":0.88,"mai":0.89,"jun":0.9},{"item":55,"ugb":"Governança","indicador":"Compensação das horas extras","frequencia":"Mensal","meta":-0.2,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":-0.78},{"item":56,"ugb":"Governança","indicador":"Giro do Enxoval","frequencia":"Mensal","meta":3.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":85.0,"jun":2.0},{"item":57,"ugb":"Governança","indicador":"Não ocorrência de produtos vencidos no frigobar","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":1.0,"mai":1.0,"jun":1.0},{"item":58,"ugb":"Governança","indicador":"Resultado orçamentário fixo menor ou igual a 100%","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.9692,"jun":0.9692},{"item":59,"ugb":"Manutenção","indicador":"Resultado orçamento fixo manutenção","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0,"jun":1.0},{"item":60,"ugb":"Manutenção","indicador":"Até 50% de manutenções corretivas","frequencia":"Mensal","meta":0.5,"jan":0.4589,"fev":0.373,"mar":0.413,"abr":0.377,"mai":0.386,"jun":0.493},{"item":61,"ugb":"Manutenção","indicador":"Atingir 85% da nota de auditoria de 6S","frequencia":"Mensal","meta":0.85,"jan":0.85,"fev":0.9,"mar":0.65,"abr":0.85,"mai":0.85,"jun":0.9},{"item":62,"ugb":"Manutenção","indicador":"Atingir 95% de resolução dos chamados","frequencia":"Mensal","meta":0.96,"jan":1.0,"fev":1.0,"mar":0.95,"abr":0.97,"mai":0.95,"jun":0.99},{"item":63,"ugb":"Manutenção","indicador":"Atingir 95% do cumprimento das manutenções preventivas","frequencia":"Mensal","meta":0.95,"jan":0.96,"fev":0.97,"mar":0.98,"abr":0.97,"mai":0.98,"jun":1.0},{"item":64,"ugb":"Manutenção","indicador":"Satisfação dos hóspedes com os serviços de manutenção","frequencia":"Mensal","meta":0.9,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.9,"jun":0.98},{"item":65,"ugb":"Marketing","indicador":"Conteúdos captados, editados e entregues no prazo, conforme planejamento","frequencia":"Mensal","meta":0.9,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.9,"jun":0.9},{"item":66,"ugb":"Marketing","indicador":"Ações (eventos, experiências, parcerias) com captação completa","frequencia":"Mensal","meta":0.95,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0,"jun":1.0},{"item":67,"ugb":"Marketing","indicador":"Ações locais (parcerias, eventos, experiências) viabilizadas e realizadas conforme planejamento","frequencia":"Mensal","meta":0.9,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.9,"jun":0.95},{"item":68,"ugb":"Marketing","indicador":"Demandas com briefing completo e sem retrabalho relevante","frequencia":"Mensal","meta":0.85,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.9,"jun":0.9},{"item":69,"ugb":"Recepção","indicador":"Satisfação do cliente com a Recepção - GUEST","frequencia":"Mensal","meta":0.97,"jan":1.0,"fev":0.97,"mar":0.98,"abr":0.977,"mai":0.9047,"jun":0.98},{"item":70,"ugb":"Recepção","indicador":"Valores não estornados pelo cliente da Recepção","frequencia":"Mensal","meta":0.99,"jan":0.9956,"fev":0.9934,"mar":0.9927,"abr":0.9867,"mai":0.9903,"jun":0.9922},{"item":71,"ugb":"Recepção","indicador":"Atingir 85% da nota de auditoria de 6S","frequencia":"Mensal","meta":0.85,"jan":1.0,"fev":0.95,"mar":0.85,"abr":0.95,"mai":0.75,"jun":0.85},{"item":72,"ugb":"Recepção","indicador":"Atingir meta de Early Check-in no mês","frequencia":"Mensal","meta":null,"jan":null,"fev":null,"mar":null,"abr":3309.83,"mai":4699.49,"jun":5634.52},{"item":73,"ugb":"Recepção","indicador":"Atingir meta de receita de Walk-ins no mês","frequencia":"Mensal","meta":null,"jan":176.0,"fev":96.0,"mar":113.0,"abr":87728.97,"mai":69178.4,"jun":6478.53},{"item":74,"ugb":"Recepção","indicador":"Atingir meta de receita Late Check-Out no mês","frequencia":"Mensal","meta":null,"jan":7.0,"fev":5.0,"mar":9.0,"abr":2388.98,"mai":2977.32,"jun":4803.02},{"item":75,"ugb":"Recepção","indicador":"Atingir meta de UP Selling no mês","frequencia":"Mensal","meta":null,"jan":16.0,"fev":4.0,"mar":21.0,"abr":1160.82,"mai":1016.07,"jun":2087.97},{"item":76,"ugb":"Recepção","indicador":"Contas pendentes de débito encerradas em até 5 dias","frequencia":"Mensal","meta":5.0,"jan":5.0,"fev":5.0,"mar":5.0,"abr":5.0,"mai":5.0,"jun":5.0},{"item":77,"ugb":"Recepção","indicador":"Resultado Orçamentário - hospedagem","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":1.0,"mai":1.0,"jun":1.0},{"item":78,"ugb":"Recepção","indicador":"Vendas diretas na Recepção","frequencia":"Mensal","meta":83081.18,"jan":null,"fev":null,"mar":null,"abr":96585.31,"mai":80975.75,"jun":88322.57},{"item":79,"ugb":"Reservas","indicador":"Cumprimento de 100% de ocupação prevista em cenário vigente","frequencia":"Mensal","meta":1.0,"jan":1.1272,"fev":1.1594,"mar":1.4398,"abr":1.2256,"mai":1.1449,"jun":0.9067},{"item":80,"ugb":"Reservas","indicador":"Atingir 85% da nota de auditoria de 6S","frequencia":"Mensal","meta":0.85,"jan":0.95,"fev":0.95,"mar":0.85,"abr":0.85,"mai":0.8,"jun":0.95},{"item":81,"ugb":"Reservas","indicador":"Satisfação do Cliente com Reservas - GUEST","frequencia":"Mensal","meta":0.95,"jan":0.98,"fev":1.0,"mar":0.95,"abr":0.95,"mai":0.8,"jun":0.98},{"item":82,"ugb":"Reservas","indicador":"Atingir diária média de R$ 372,97","frequencia":"Mensal","meta":372.97,"jan":394.84,"fev":384.67,"mar":372.65,"abr":369.31,"mai":411.74,"jun":413.5},{"item":83,"ugb":"Reservas","indicador":"Cumprimento de 100% das receitas de hospedagem","frequencia":"Mensal","meta":1.0,"jan":1.0912,"fev":1.1764,"mar":1.4398,"abr":1.2256,"mai":1.0,"jun":1.0052},{"item":84,"ugb":"Restaurante","indicador":"Contas pendentes no sistema encerradas em até 5 dias","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":null},{"item":85,"ugb":"Restaurante","indicador":"Até 30% da margem bruta de insumos","frequencia":"Mensal","meta":0.27,"jan":0.2721,"fev":0.2588,"mar":0.2788,"abr":0.2701,"mai":0.2458,"jun":0.3105},{"item":86,"ugb":"Restaurante","indicador":"Valores não estornados pelos clientes do Restaurante","frequencia":"Mensal","meta":0.99,"jan":0.9993,"fev":0.9973,"mar":1.0,"abr":1.0,"mai":0.9955,"jun":0.9993},{"item":87,"ugb":"Restaurante","indicador":"Atingir 100% do valor da meta mensal","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.8817,"jun":null},{"item":88,"ugb":"Restaurante","indicador":"Atingir 85% da nota de auditoria de 6S","frequencia":"Mensal","meta":0.85,"jan":0.95,"fev":0.9,"mar":0.9,"abr":0.9,"mai":0.85,"jun":0.6},{"item":89,"ugb":"Restaurante","indicador":"Satisfação com a cozinha e room service","frequencia":"Mensal","meta":0.93,"jan":1.0,"fev":0.9411,"mar":0.96,"abr":0.9661,"mai":0.8888,"jun":0.8888},{"item":90,"ugb":"Restaurante","indicador":"Satisfação com o serviço de Restaurante e room service","frequencia":"Mensal","meta":0.93,"jan":0.9722,"fev":0.8985,"mar":0.91,"abr":0.9387,"mai":0.8333,"jun":0.8013},{"item":91,"ugb":"Restaurante","indicador":"Compensação de horas extras","frequencia":"Mensal","meta":-0.2,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":0.03},{"item":92,"ugb":"Restaurante","indicador":"Garantir ao menos 5 novas avaliações de hóspedes do restaurante no Tripadvisor","frequencia":"Mensal","meta":1.0,"jan":1.8,"fev":0.2,"mar":0.4,"abr":0.6,"mai":0.8,"jun":2.0},{"item":93,"ugb":"Restaurante","indicador":"Resultado Orçamentário A&B","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":94,"ugb":"Setor Pessoal","indicador":"Conformidade obtida na auditoria de 6S","frequencia":"Mensal","meta":0.85,"jan":0.95,"fev":0.95,"mar":0.9,"abr":0.9,"mai":0.9,"jun":0.85},{"item":95,"ugb":"Setor Pessoal","indicador":"Precisão nas movimentações de VT, VR, planos de saúde e odontológicos","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":96,"ugb":"Setor Pessoal","indicador":"Admissões e solicitações de benefícios concluídas em até 48 horas","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":0.95,"mai":1.0,"jun":1.0},{"item":97,"ugb":"Setor Pessoal","indicador":"Cumprimento das obrigações trabalhistas e acessórias","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":98,"ugb":"Setor Pessoal","indicador":"Precisão na folha de pagamento","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":0.95,"abr":0.95,"mai":1.0,"jun":1.0},{"item":99,"ugb":"T.I. IU-Á","indicador":"Backups realizados com êxito","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":null},{"item":100,"ugb":"T.I. IU-Á","indicador":"Atingir 85% da nota de auditoria de 6S","frequencia":"Mensal","meta":0.85,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":null},{"item":101,"ugb":"T.I. IU-Á","indicador":"Suporte aos usuários: 90% de resolução dos chamados de acordo com o prazo","frequencia":"Mensal","meta":0.9,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":null}];
+
+const DATA_CADIS = [{"item":1,"ugb":"Contabilidade","indicador":"(Empresas SJ exceto GUEST e Litoral) Atingir até o 30º dia do mês 100% do encerramento do balancete","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":1.0},{"item":2,"ugb":"Contabilidade","indicador":"(EMPRESAS SJ) Garantir 100% da entrega de obrigações principais (recolhimento de tributos) e acessórias no prazo","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":3,"ugb":"Contabilidade","indicador":"(SJ / SJCARIRI / SAMIRADV / GK / SATINVEST) Atingir até o 20º dia de cada mês 100% do Relatório Financeiro das empresas obrigadas","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":4,"ugb":"Contabilidade","indicador":"(SJ) 100% de cumprimento das Despesas do Orçamento","frequencia":"Trimestral","meta":1.0,"jan":null,"fev":null,"mar":0.889,"abr":null,"mai":null,"jun":null},{"item":5,"ugb":"Financeiro","indicador":"EMPRESAS SJ - 100% dos pagamentos enviados para o banco no prazo original de vencimento","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":1.0},{"item":6,"ugb":"Financeiro","indicador":"CADIS 3 - 100% de cumprimento das Despesas do Orçamento","frequencia":"Trimestral","meta":1.0,"jan":null,"fev":null,"mar":1.0644,"abr":null,"mai":null,"jun":null},{"item":7,"ugb":"Financeiro","indicador":"EMPRESAS SJ - Controle e atualização de 100% das Procurações das empresas Cadis 3","frequencia":"Anual","meta":1.0,"jan":null,"fev":null,"mar":1.0,"abr":null,"mai":null,"jun":null},{"item":8,"ugb":"Financeiro","indicador":"READI - 100% dos emolumentos pagos com nota de débito para reembolso geradas e enviadas para o cliente em até 48h do pagamento","frequencia":"Mensal","meta":1.0,"jan":0.892,"fev":0.88,"mar":0.875,"abr":0.85,"mai":0.88,"jun":0.95},{"item":9,"ugb":"Financeiro","indicador":"READI - 80% de Valores Recebidos no Prazo Contratual","frequencia":"Mensal","meta":0.8,"jan":0.92,"fev":0.825,"mar":0.934,"abr":0.9769,"mai":0.99,"jun":0.92},{"item":10,"ugb":"Financeiro","indicador":"READI - 90% dos Emolumentos Pagos em até 24h da Solicitação","frequencia":"Mensal","meta":0.9,"jan":0.943,"fev":0.9017,"mar":0.9617,"abr":0.813,"mai":0.835,"jun":0.926},{"item":11,"ugb":"Financeiro","indicador":"READI - Entregar Conciliação Bancária Readi até o 5ª dia útil do mês subsequente","frequencia":"Mensal","meta":1.0,"jan":null,"fev":null,"mar":null,"abr":1.0,"mai":0.5,"jun":1.0},{"item":12,"ugb":"Financeiro","indicador":"SJ IMÓVEIS - 100% de Cumprimento do Orçamento de Despesas","frequencia":"Trimestral","meta":1.0,"jan":null,"fev":null,"mar":0.6979,"abr":null,"mai":null,"jun":null},{"item":13,"ugb":"Financeiro","indicador":"SJ IMÓVEIS - Eficiência e eficácia nos recebimentos: 100% dos recebimentos conciliados","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":14,"ugb":"Gente e Gestão","indicador":"(ECO IMOB) Agilidade das seleções: 80% das seleções realizadas no prazo (30 dias corridos para vagas operacionais e 60 dias corridos para vagas estratégicas)","frequencia":"Mensal","meta":0.8,"jan":0.8571,"fev":0.75,"mar":0.8333,"abr":0.9091,"mai":1.0,"jun":1.0},{"item":15,"ugb":"Gente e Gestão","indicador":"(ECO IMOB) Qualidade das seleções: 80% de efetivação após 90 dias","frequencia":"Mensal","meta":0.8,"jan":1.0,"fev":1.0,"mar":1.0,"abr":0.6667,"mai":0.5,"jun":0.875},{"item":16,"ugb":"Gente e Gestão","indicador":"(SJ) 100% de cumprimento das Despesas do Orçamento","frequencia":"Trimestral","meta":1.0,"jan":null,"fev":null,"mar":0.838,"abr":null,"mai":null,"jun":0.2598},{"item":17,"ugb":"Gepa","indicador":"(ECO IMOB) 100% de cumprimento das Despesas do Orçamento","frequencia":"Trimestral","meta":1.0,"jan":null,"fev":null,"mar":0.8435,"abr":null,"mai":null,"jun":0.7752},{"item":18,"ugb":"Gepa","indicador":"(ECO IMOB) 90% das manutenções corretivas realizadas (Não considerar itens não autorizados pela direção/gerência)","frequencia":"Mensal","meta":0.9,"jan":0.9,"fev":0.9,"mar":0.9,"abr":0.9,"mai":0.9,"jun":0.9},{"item":19,"ugb":"Gepa","indicador":"(ECO IMOB) 90% das manutenções preventivas realizadas (Não considerar itens solicitados pela direção/gerência para serem acrescentados e itens que a direção/gerência solicite retirada)","frequencia":"Mensal","meta":0.9,"jan":0.9,"fev":0.9,"mar":0.9,"abr":0.9,"mai":0.9,"jun":0.9},{"item":20,"ugb":"Marketing","indicador":"(IU-Á) Índice de Performance de Marketing Hoteleiro","frequencia":"Mensal","meta":85.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":21,"ugb":"Marketing","indicador":"(IU-Á) Taxa de Leads Qualificados","frequencia":"Mensal","meta":0.8,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":22,"ugb":"Marketing","indicador":"(SJ) Custo por Imóvel Captado (CPR)","frequencia":"Mensal","meta":400.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":23,"ugb":"Marketing","indicador":"(SJ) Índice de Eficiência das Campanhas Digitais","frequencia":"Mensal","meta":0.9,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":24,"ugb":"Marketing","indicador":"(SJ) Taxa de Leads Qualificados | Captação","frequencia":"Mensal","meta":0.4,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":0.0771},{"item":25,"ugb":"Marketing","indicador":"(SJ) Taxa de Leads Qualificados | Locação","frequencia":"Mensal","meta":0.4,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":0.0352},{"item":26,"ugb":"Marketing","indicador":"(VG) Índice de Performance de Marketing Hoteleiro","frequencia":"Mensal","meta":85.0,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":27,"ugb":"Marketing","indicador":"(VG) Taxa de Leads Qualificados","frequencia":"Mensal","meta":0.8,"jan":null,"fev":null,"mar":null,"abr":null,"mai":null,"jun":null},{"item":28,"ugb":"Secretária da Direção","indicador":"100% de cumprimento das despesas de orçamento","frequencia":"Trimestral","meta":1.0,"jan":null,"fev":null,"mar":1.0874,"abr":null,"mai":null,"jun":null},{"item":29,"ugb":"Secretária da Direção","indicador":"100% dos pagamentos efetuados até o dia 30 de cada mês","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":0.9872},{"item":30,"ugb":"Setor Pessoal","indicador":"100% de cumprimento das Despesas do Orçamento","frequencia":"Trimestral","meta":1.0,"jan":null,"fev":null,"mar":0.9802,"abr":null,"mai":null,"jun":null},{"item":31,"ugb":"Setor Pessoal","indicador":"Elaborar 100% de Folha de Pagamento sem erros","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":0.98,"abr":1.0,"mai":1.0,"jun":1.0},{"item":32,"ugb":"Setor Pessoal","indicador":"Elaborar 100% dos encargos sociais sem erros","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":33,"ugb":"Setor Pessoal","indicador":"Elaborar 98% dos pedidos de benefícios sem erros","frequencia":"Mensal","meta":0.98,"jan":1.0,"fev":0.98,"mar":0.98,"abr":0.98,"mai":1.0,"jun":0.98},{"item":34,"ugb":"Setor Pessoal","indicador":"Entregar 100% Benefícios para pagamento dentro do prazo de até 5 dias antes do vencimento","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":0.98,"mai":1.0,"jun":1.0},{"item":35,"ugb":"Setor Pessoal","indicador":"Entregar 100% Folha de pagamento em até 3 dias úteis antes do crédito ao setor financeiro, exceto folha de comissões","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":0.95},{"item":36,"ugb":"Setor Pessoal","indicador":"Entregar 100% dos encargos sociais para pagamento em até 1 dia antes do vencimento","frequencia":"Mensal","meta":1.0,"jan":1.0,"fev":1.0,"mar":1.0,"abr":1.0,"mai":1.0,"jun":1.0},{"item":37,"ugb":"Tecnologia e Inovação","indicador":"(CADIS 3) (SJ IMÓVEIS) - Governança PMO - Cumprimento de prazo das demandas planejadas","frequencia":"Mensal","meta":0.85,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.95,"jun":1.0},{"item":38,"ugb":"Tecnologia e Inovação","indicador":"(CADIS 3) - Desenvolvimento - Satisfação do cliente interno: Atingir 95% de satisfação no desenvolvimento e manutenção dos sistemas desenvolvidos pela Techway","frequencia":"Mensal","meta":0.95,"jan":0.999,"fev":1.0,"mar":1.0,"abr":0.996,"mai":0.999,"jun":1.0},{"item":39,"ugb":"Tecnologia e Inovação","indicador":"(CADIS 3) - Suporte - Satisfação do cliente interno: Atingir 90% de satisfação no suporte aos usuários","frequencia":"Mensal","meta":0.9,"jan":0.982,"fev":0.993,"mar":0.955,"abr":0.954,"mai":0.992,"jun":0.956},{"item":40,"ugb":"Tecnologia e Inovação","indicador":"(ECO IMOB) - Governança PMO - Cumprimento dos Rituais & Artefatos","frequencia":"Mensal","meta":0.85,"jan":null,"fev":null,"mar":null,"abr":null,"mai":0.94,"jun":0.86},{"item":41,"ugb":"Tecnologia e Inovação","indicador":"(READI) - Governança PMO - Cumprimento das Entregas no Prazo pela Algorithmus","frequencia":"Mensal","meta":0.85,"jan":null,"fev":null,"mar":null,"abr":null,"mai":1.0,"jun":1.0},{"item":42,"ugb":"Tecnologia e Inovação","indicador":"(SJ IMÓVEIS) - Cumprimento de 100% do orçamento de despesas","frequencia":"Trimestral","meta":1.0,"jan":null,"fev":null,"mar":0.9888,"abr":null,"mai":null,"jun":null}];
+
+let selectedCompany = 'sj';
+const ACTIVE_DATA_MAP = { sj: DATA, readi: DATA_READI, adv: DATA_ADV, vg: DATA_VG, iua: DATA_IUA, cadis: DATA_CADIS };
+let ACTIVE_DATA = DATA;
+
+function selectCompany(id) {
+  selectedCompany = id;
+  document.querySelectorAll('.co-card').forEach(c => c.classList.remove('selected'));
+  const el = document.querySelector('.co-card[data-co="' + id + '"]');
+  if (el) el.classList.add('selected');
+}
+
+function activateCompany(id) {
+  ACTIVE_DATA = ACTIVE_DATA_MAP[id] || DATA;
+  UGB_LIST = [...new Set(ACTIVE_DATA.map(d => d.ugb).filter(Boolean))].sort();
+  const sub = document.querySelector('.hdr-sub');
+  const names = { sj: 'SJ Imóveis', readi: 'READI', adv: 'SJ Advogados', vg: 'Verdegreen', iua: 'iu-á Hotel', cadis: 'CADIS 3' };
+  if (sub) sub.textContent = (names[id] || 'SJ Imóveis') + ' · 1º Semestre 2026';
+}
+
+const LIB   = new Set([7,11,24,25,46,60,71,90,91,92,100,101,120]);
+const INFO  = new Set([17,27,28,29,103,104,105]);
+const MONTHS = ['jan','fev','mar','abr','mai','jun'];
+let UGB_LIST = [...new Set(DATA.map(d=>d.ugb).filter(Boolean))].sort();
+
+// ── KPI helpers ──
+function isPct(r){ const m=r.meta; return m!==null && typeof m!=='string' && m>=0 && m<=1.5; }
+function metaOf(r,m){ if(r['meta_'+m]!==undefined&&r['meta_'+m]!==null) return r['meta_'+m]; return r.meta; }
+function fmtVal(r,v){
+  if(v===null||v===undefined) return null;
+  if(INFO.has(r.item)) return v.toLocaleString('pt-BR',{maximumFractionDigits:0});
+  if(isPct(r)) return (v*100).toFixed(1).replace('.',',')+'\u202f%';
+  if(v>=1000) return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return v.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:2});
+}
+function fmtMeta(r){
+  const m=r.meta; if(m===null) return '—'; if(typeof m==='string') return m;
+  if(INFO.has(r.item)) return '—';
+  if(isPct(r)){ if(m===0&&!LIB.has(r.item)) return '—'; return (m*100).toFixed(0)+'\u202f%'; }
+  if(m>=1000) return 'R$\u202f'+m.toLocaleString('pt-BR',{maximumFractionDigits:0});
+  return m.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1});
+}
+function getStatusM(r,v,mes){
+  if(v===null||v===undefined) return 'na';
+  const m=metaOf(r,mes);
+  if(INFO.has(r.item)) return 'info';
+  if(m===null||typeof m==='string') return 'noref';
+  if(m===0&&!LIB.has(r.item)) return 'info';
+  return LIB.has(r.item)?(v<=m?'ok':'ng'):(v>=m?'ok':'ng');
+}
+function cellHtml(r,mes){
+  const v=r[mes]; if(v===null||v===undefined) return '<span class="cv na">—</span>';
+  return `<span class="cv ${getStatusM(r,v,mes)}">${fmtVal(r,v)}</span>`;
+}
+function calcOkNg(rows){
+  let ok=0,ng=0,na=0;
+  rows.forEach(r=>{ const v=r['jun']; if(v===null||v===undefined){na++;return;} const s=getStatusM(r,v,'jun'); if(s==='ok') ok++; else if(s==='ng') ng++; else na++; });
+  return {ok,ng,na,total:rows.length};
+}
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+let currentStep = 1;
+const TOTAL_STEPS = 4;
+
+const state = {
+  user_email: '',
+  nome: '', funcao: '', ugb: '',
+  definicao_bbf: '',
+  dimensoes_medidas: [],
+  dimensoes_lacunas: [],
+  nivel_entrega: null,
+  justificativa: '',
+  analise_kpis: '',
+  timestamp: null
+};
+
+// ══════════════════════════════════════════════════
+// PROGRESS
+// ══════════════════════════════════════════════════
+function updateProgress(step){
+  for(let i=1;i<=TOTAL_STEPS;i++){
+    const dot=document.getElementById('pd-'+i);
+    const lbl=document.getElementById('pl-lbl-'+i);
+    if(!dot) continue;
+    dot.classList.remove('active','done');
+    lbl.classList.remove('active','done');
+    if(i<step){ dot.classList.add('done'); lbl.classList.add('done'); dot.textContent='✓'; }
+    else if(i===step){ dot.classList.add('active'); lbl.classList.add('active'); dot.textContent=i; }
+    else{ dot.textContent=i; }
+    if(i<TOTAL_STEPS){ const l=document.getElementById('pl-'+i); if(l) l.classList.toggle('done',i<step); }
+  }
+}
+
+// ══════════════════════════════════════════════════
+// STEP RENDERERS
+// ══════════════════════════════════════════════════
+function renderStep1(){
+  const ugbOpts = UGB_LIST.map(u=>`<option value="${u}" ${state.ugb===u?'selected':''}>${u}</option>`).join('');
+  return `<div class="card">
+    <div class="card-head">
+      <div class="step-eyebrow">Etapa 1 de 4 · Identificação</div>
+      <div class="step-title">Quem é você?</div>
+      <div class="step-desc">Confirme seus dados e selecione a área que você representa nesta pesquisa.</div>
+    </div>
+    <div class="card-body">
+      <div class="fg">
+        <label class="fl">Nome completo <span>*</span></label>
+        <input class="fi" type="text" id="f-nome" value="${state.nome}" placeholder="Ex: Maria Silva">
+      </div>
+      <div class="fg">
+        <label class="fl">Função / Cargo <span>*</span></label>
+        <input class="fi" type="text" id="f-funcao" value="${state.funcao}" placeholder="Ex: Líder de UGB, Gerente, Coordenador...">
+      </div>
+      <div class="fg">
+        <label class="fl">UGB / Área <span>*</span></label>
+        <select class="fi" id="f-ugb"><option value="">Selecione sua UGB...</option>${ugbOpts}</select>
+      </div>
+      <div class="alert err" id="err-1">Preencha todos os campos antes de continuar.</div>
+      <div class="actions"><div></div><button class="btn btn-next" onclick="nextStep()">Continuar →</button></div>
+    </div>
+  </div>`;
+}
+
+// ── Dimension list helpers ──
+function dimListHtml(type){
+  const items = type==='ok' ? state.dimensoes_medidas : state.dimensoes_lacunas;
+  if(!items.length) return `<div class="dim-empty">${type==='ok'?'Nenhuma dimensão adicionada ainda.':'Nenhuma lacuna adicionada ainda.'}</div>`;
+  return items.map((txt,i)=>`
+    <div class="dim-item ${type}">
+      <span class="dim-item-icon">${type==='ok'?'✅':'🔴'}</span>
+      <span class="dim-item-text">${txt}</span>
+      <button class="dim-item-del" onclick="removeDim('${type}',${i})">×</button>
+    </div>`).join('');
+}
+function addDim(type){
+  const inp=document.getElementById('dim-inp-'+type);
+  const val=inp?.value.trim(); if(!val) return;
+  (type==='ok'?state.dimensoes_medidas:state.dimensoes_lacunas).push(val);
+  inp.value='';
+  document.getElementById('dim-list-'+type).innerHTML=dimListHtml(type);
+  updateDimCounter(type); inp.focus();
+}
+function removeDim(type,idx){
+  (type==='ok'?state.dimensoes_medidas:state.dimensoes_lacunas).splice(idx,1);
+  document.getElementById('dim-list-'+type).innerHTML=dimListHtml(type);
+  updateDimCounter(type);
+}
+function updateDimCounter(type){
+  const count=(type==='ok'?state.dimensoes_medidas:state.dimensoes_lacunas).length;
+  const el=document.getElementById('dim-count-'+type);
+  if(el){ el.textContent=count; el.classList.toggle('has',count>0); }
+}
+function handleDimKey(e,type){ if(e.key==='Enter'){e.preventDefault();addDim(type);} }
+
+function renderStep2(){
+  return `<div class="card">
+    <div class="card-head">
+      <div class="step-eyebrow">Etapa 2 de 4 · Definição Conceitual</div>
+      <div class="step-title">O que é Básico Bem Feito<br>na sua área?</div>
+      <div class="step-desc">Defina o conceito, mapeie o que já está sendo medido e entregue, e aponte as lacunas que ainda existem na sua área.</div>
+    </div>
+    <div class="card-body">
+      <div class="fg">
+        <label class="fl">Sua UGB</label>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border)">
+          <span style="font-size:18px">🏢</span>
+          <div><div style="font-weight:600;font-size:13px">${state.ugb}</div><div style="font-size:11px;color:var(--muted)">${state.nome} · ${state.funcao}</div></div>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Definição de Básico Bem Feito para a sua área <span>*</span></label>
+        <div class="fg-hint">O que não pode falhar? Quem depende da sua entrega? O que acontece quando o básico não é feito?</div>
+        <textarea class="fi" id="f-definicao" style="min-height:120px" placeholder="Na minha visão, o Básico Bem Feito na ${state.ugb} significa...">${state.definicao_bbf}</textarea>
+      </div>
+      <div class="dim-divider"></div>
+      <div class="dim-section">
+        <div class="dim-header">
+          <div class="dim-badge ok">✅ O que já mede o básico</div>
+          <div class="dim-counter has" id="dim-count-ok">${state.dimensoes_medidas.length}</div>
+        </div>
+        <div class="dim-desc">Liste como você mede o básico bem feito na sua área.</div>
+        <div class="dim-input-row">
+          <input class="fi" type="text" id="dim-inp-ok" placeholder="Ex: Prazo de entrega dos contratos, Satisfação no SAC..." onkeydown="handleDimKey(event,'ok')">
+          <button class="dim-add-btn ok" onclick="addDim('ok')">+ Adicionar</button>
+        </div>
+        <div id="dim-list-ok">${dimListHtml('ok')}</div>
+      </div>
+      <div class="dim-divider"></div>
+      <div class="dim-section">
+        <div class="dim-header">
+          <div class="dim-badge gap">🔴 O que ainda é lacuna</div>
+          <div class="dim-counter has" id="dim-count-gap">${state.dimensoes_lacunas.length}</div>
+        </div>
+        <div class="dim-desc">A partir do que você entende por Básico Bem Feito, descreva o que ainda não é medido, mas deveria.</div>
+        <div class="dim-input-row">
+          <input class="fi" type="text" id="dim-inp-gap" placeholder="Ex: Tempo de resposta a proprietários, Rastreabilidade de ocorrências..." onkeydown="handleDimKey(event,'gap')">
+          <button class="dim-add-btn gap" onclick="addDim('gap')">+ Adicionar</button>
+        </div>
+        <div id="dim-list-gap">${dimListHtml('gap')}</div>
+      </div>
+      <div class="alert err" id="err-2"></div>
+      <div class="actions">
+        
+        <button class="btn btn-next" onclick="nextStep()">Continuar →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+const BARS = [
+  {level:1,cls:'lvl1',label:'Abaixo do Básico',anchor:'Processos essenciais com falhas recorrentes; não há padrão de execução definido; erros impactam clientes e outras UGBs com frequência. A área apaga incêndio, não entrega.'},
+  {level:2,cls:'lvl2',label:'Em Construção',anchor:'O básico existe, mas a execução é instável. Depende de quem está de plantão ou do contexto do dia. Ainda há lacunas visíveis e o resultado varia entre pessoas ou períodos.'},
+  {level:3,cls:'lvl3',label:'Básico Realizado',anchor:'Os processos essenciais funcionam com regularidade. A equipe sabe o que precisa fazer e entrega na maior parte das vezes, com exceções pontuais gerenciáveis.'},
+  {level:4,cls:'lvl4',label:'Básico Consolidado',anchor:'Execução consistente e previsível. Exceções são tratadas rapidamente. A equipe opera com autonomia e alinhamento. Qualquer pessoa substitui qualquer pessoa sem perda de padrão.'},
+  {level:5,cls:'lvl5',label:'Além do Básico',anchor:'O básico está tão consolidado que a área opera com autonomia total e consistência independente de quem está presente. Os padrões são conhecidos, respeitados e executados sem necessidade de controle externo.'},
+];
+
+function renderStep3(){
+  const barsHtml = BARS.map(b=>`
+    <div class="bars-item ${b.cls} ${state.nivel_entrega===b.level?'selected':''}" onclick="selectNivel(${b.level},this,'${b.cls}')">
+      <div class="bars-num">${b.level}</div>
+      <div class="bars-txt">
+        <div class="bars-label">${b.label}</div>
+        <div class="bars-anchor">${b.anchor}</div>
+      </div>
+    </div>`).join('');
+  return `<div class="card">
+    <div class="card-head">
+      <div class="step-eyebrow">Etapa 3 de 4 · Autoavaliação BARS</div>
+      <div class="step-title">Como está o nível de entrega<br>da sua UGB?</div>
+      <div class="step-desc">Selecione o nível que melhor descreve o momento atual da sua área.</div>
+    </div>
+    <div class="card-body">
+      <div class="bars-wrap">${barsHtml}</div>
+      <div class="fg" id="just-fg" style="${state.nivel_entrega?'':'display:none'}">
+        <label class="fl">Justifique sua avaliação <span>*</span></label>
+        <div class="fg-hint">Cite evidências concretas do dia a dia da sua UGB neste semestre.</div>
+        <textarea class="fi" id="f-justificativa" style="min-height:120px" placeholder="Baseio minha avaliação em...">${state.justificativa}</textarea>
+      </div>
+      <div class="alert err" id="err-3">Selecione um nível e escreva uma justificativa antes de continuar.</div>
+      <div class="actions">
+        
+        <button class="btn btn-next" onclick="nextStep()">Continuar →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function selectNivel(level,el,cls){
+  document.querySelectorAll('.bars-item').forEach(b=>{ b.classList.remove('selected'); BARS.forEach(x=>b.classList.remove(x.cls)); });
+  el.classList.add('selected',cls);
+  state.nivel_entrega=level;
+  const jfg=document.getElementById('just-fg'); if(jfg) jfg.style.display='';
+}
+
+function buildKPITable(ugb){
+  const rows=ACTIVE_DATA.filter(d=>d.ugb===ugb);
+  if(!rows.length) return '<div class="empty-kpi">Nenhum indicador encontrado para esta UGB.</div>';
+  const mini=``;
+  const trows=rows.map((r,i)=>`<tr>
+    <td class="ci">${String(i+1).padStart(2,'0')}</td>
+    <td class="cn" title="${r.indicador}">${r.indicador}</td>
+    <td class="cm">${r.frequencia}</td><td class="cm">${fmtMeta(r)}</td>
+    ${MONTHS.map(m=>`<td class="mc">${cellHtml(r,m)}</td>`).join('')}
+  </tr>`).join('');
+  return `${mini}<div class="tscroll"><table>
+    <thead><tr><th>#</th><th>Indicador</th><th>Freq.</th><th>Meta</th>
+    ${MONTHS.map(m=>`<th class="mc">${m.charAt(0).toUpperCase()+m.slice(1)}</th>`).join('')}</tr></thead>
+    <tbody>${trows}</tbody>
+  </table></div>`;
+}
+
+function renderStep4(){
+  return `<div class="card">
+    <div class="card-head">
+      <div class="step-eyebrow">Etapa 4 de 4 · Análise de indicadores</div>
+      <div class="step-title">Olhando para os dados,<br>o que eles revelam?</div>
+      <div class="step-desc">Estes são os indicadores da sua UGB no 1º semestre de 2026. Analise o desempenho com olhar crítico sobre o Básico Bem Feito.</div>
+    </div>
+    <div class="card-body">
+      <div class="kpi-ugb-header">
+        <div class="kpi-ugb-title">📊 ${state.ugb}</div>
+        <div class="kpi-ugb-badge">Jan–Jun 2026</div>
+      </div>
+      ${buildKPITable(state.ugb)}
+      <div class="critique-section">
+        <div class="critique-label">Análise Crítica</div>
+        <div class="critique-guide">
+          <strong>Como fazer uma boa análise:</strong>
+          O que os dados confirmam? O que surpreende? Quais indicadores têm relação direta com as lacunas que você mapeou? O que os números ainda não conseguem mostrar? Onde está a maior distância entre o que é medido e o que de fato impacta o cliente?
+        </div>
+        <div class="fg">
+          <label class="fl">Sua análise crítica <span>*</span></label>
+          <textarea class="fi" id="f-analise" style="min-height:150px" placeholder="Olhando para os indicadores do semestre, percebo que...">${state.analise_kpis}</textarea>
+        </div>
+      </div>
+      <div class="alert err" id="err-4">Escreva sua análise crítica antes de finalizar.</div>
+      <div class="actions">
+        
+        <button class="btn btn-submit" onclick="nextStep()">✓ Confirmar envio</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function scoreInfo(n){
+  const colors={1:['var(--red)','var(--red-bg)'],2:['var(--orange)','var(--orange-bg)'],3:['var(--blue)','var(--blue-bg)'],4:['#7C3AED','#F5F3FF'],5:['var(--green)','var(--green-bg)']};
+  const bar=BARS.find(b=>b.level===n);
+  const [color,bg]=colors[n]||['var(--navy)','var(--blue-bg)'];
+  return {label:bar?.label||'',color,bg};
+}
+
+
+function renderSuccess(){
+  return `<div class="card">
+    <div class="success-wrap">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Pesquisa registrada!</div>
+      <div class="success-sub">Obrigado, <strong>${state.nome}</strong>. Suas respostas sobre a <strong>${state.ugb}</strong> foram salvas com sucesso e farão parte da análise de Básico Bem Feito do 1º semestre de 2026.<br><br>Sua contribuição é fundamental para construirmos juntos um padrão de excelência operacional.</div>
+      <div class="success-actions">
+        <button class="btn btn-export" onclick="exportJSON()">↓ Baixar cópia (JSON)</button>
+        <button class="btn btn-next" onclick="resetForm()">Responder novamente</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// NAVIGATION + VALIDATION
+// ══════════════════════════════════════════════════
+function renderCurrentStep(){
+  const host=document.getElementById('step-host');
+  if(currentStep===5){ host.innerHTML=renderSuccess(); document.getElementById('prog-wrap').style.display='none'; return; }
+  const fns=[null,renderStep1,renderStep2,renderStep3,renderStep4];
+  host.innerHTML=fns[currentStep]?.()|| '';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function validateStep(){
+  if(currentStep===1){
+    const nome=document.getElementById('f-nome')?.value.trim();
+    const funcao=document.getElementById('f-funcao')?.value.trim();
+    const ugb=document.getElementById('f-ugb')?.value;
+    if(!nome||!funcao||!ugb){ document.getElementById('err-1')?.classList.add('show'); return false; }
+    state.nome=nome; state.funcao=funcao; state.ugb=ugb; return true;
+  }
+  if(currentStep===2){
+    const def=document.getElementById('f-definicao')?.value.trim();
+    const err=document.getElementById('err-2');
+    if(!def||def.length<20){ if(err){err.textContent='Escreva sua definição de Básico Bem Feito (mínimo 20 caracteres).';err.classList.add('show');} return false; }
+    if(!state.dimensoes_medidas.length){ if(err){err.textContent='Adicione pelo menos uma dimensão que já mede o básico na sua área.';err.classList.add('show');} return false; }
+    if(!state.dimensoes_lacunas.length){ if(err){err.textContent='Adicione pelo menos uma lacuna — o que ainda não está sendo medido ou entregue.';err.classList.add('show');} return false; }
+    state.definicao_bbf=def; return true;
+  }
+  if(currentStep===3){
+    const just=document.getElementById('f-justificativa')?.value.trim();
+    if(!state.nivel_entrega||!just||just.length<15){ document.getElementById('err-3')?.classList.add('show'); return false; }
+    state.justificativa=just; return true;
+  }
+  if(currentStep===4){
+    const analise=document.getElementById('f-analise')?.value.trim();
+    if(!analise||analise.length<20){ document.getElementById('err-4')?.classList.add('show'); return false; }
+    state.analise_kpis=analise; return true;
+  }
+  return true;
+}
+
+function nextStep(){
+  if(!validateStep()) return;
+  if(currentStep===4){ submitForm(); return; }
+  currentStep++;
+  updateProgress(Math.min(currentStep,4));
+  renderCurrentStep();
+}
+
+// ══════════════════════════════════════════════════
+// SUBMIT TO SUPABASE
+// ══════════════════════════════════════════════════
+async function submitForm(){
+  state.timestamp = new Date().toISOString();
+  const overlay = document.getElementById('saving-overlay');
+  overlay.classList.add('show');
+
+  const bar = BARS.find(b=>b.level===state.nivel_entrega);
+
+  const payload = {
+    user_id:             null,
+    user_email:          state.user_email,
+    nome:                state.nome,
+    funcao:              state.funcao,
+    empresa:             selectedCompany || 'sj',
+    ugb:                 state.ugb,
+    definicao_bbf:       state.definicao_bbf,
+    dimensoes_medidas:   JSON.stringify(state.dimensoes_medidas),
+    dimensoes_lacunas:   JSON.stringify(state.dimensoes_lacunas),
+    nivel_entrega:       state.nivel_entrega,
+    nivel_label:         bar?.label || '',
+    justificativa:       state.justificativa,
+    analise_kpis:        state.analise_kpis,
+    timestamp:           new Date().toISOString(),
+  };
+
+  try {
+    const { error } = await sbInsert('bbf_respostas', payload);
+    if(error){
+      console.error('Supabase error:', JSON.stringify(error));
+    }
+  } catch(e) {
+    console.error('Submit error:', e);
+  } finally {
+    overlay.classList.remove('show');
+  }
+
+  currentStep=5;
+  document.getElementById('prog-wrap').style.display='none';
+  document.getElementById('step-host').innerHTML=renderSuccess();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function exportJSON(){
+  const data={...state,timestamp:state.timestamp||new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`bbf_${state.ugb.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'')}_${data.timestamp.slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function resetForm(){
+  Object.assign(state,{nome:'',funcao:'',ugb:'',definicao_bbf:'',dimensoes_medidas:[],dimensoes_lacunas:[],nivel_entrega:null,justificativa:'',analise_kpis:'',timestamp:null});
+  currentStep=1;
+  document.getElementById('prog-wrap').style.display='';
+  updateProgress(1); renderCurrentStep();
+}
+</script>
+</body>
+</html>
