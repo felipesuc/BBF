@@ -108,6 +108,19 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 
 .empty-note{font-size:12px;color:var(--muted);text-align:center;padding:24px 0}
 
+/* ═══ ADERÊNCIA ═══ */
+.ader-emp-list{display:flex;flex-direction:column}
+.ader-emp-row{border-top:1px solid var(--border)}
+.ader-emp-row:first-child{border-top:none}
+.ader-emp-head{display:flex;align-items:center;gap:14px;padding:10px 2px}
+.ader-emp-name{width:170px;flex-shrink:0;font-size:12.5px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.ader-caret{font-size:10px;color:var(--muted);width:10px;display:inline-block}
+.ader-emp-bar{flex:1}
+.ader-emp-count{width:56px;text-align:right;font-size:11.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+.ader-emp-body{display:none;font-size:11.5px;color:var(--red);line-height:1.7;padding:2px 2px 12px 32px}
+.ader-emp-body.open{display:block}
+.ader-emp-body-lbl{font-weight:700;color:var(--muted);text-transform:uppercase;font-size:10px;letter-spacing:.4px;margin-right:4px}
+
 /* ═══ UGB DETAIL ═══ */
 .ugb-select-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .ugb-select-row select{height:40px;padding:0 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;font-family:'IBM Plex Sans',sans-serif;min-width:260px}
@@ -192,12 +205,14 @@ tr.row-main:hover{background:var(--bg)}
     <div class="tabs">
       <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</div>
       <div class="tab" data-tab="dataset" onclick="switchTab('dataset')">Dados</div>
+      <div class="tab" data-tab="sessoes" onclick="switchTab('sessoes')">Sessões de resposta</div>
     </div>
 
     <div id="loading" class="loading-wrap"><div class="spin"></div> Carregando respostas…</div>
 
     <div id="tab-dashboard" class="tab-panel active"></div>
     <div id="tab-dataset" class="tab-panel"></div>
+    <div id="tab-sessoes" class="tab-panel"></div>
   </div>
 </div>
 
@@ -217,6 +232,23 @@ const NIVEL_INFO = {
   4:{label:'Básico Consolidado', color:'#7C3AED', bg:'#F5F3FF'},
   5:{label:'Além do Básico',   color:'#16A34A', bg:'#DCFCE7'},
 };
+const NIVEL_ANCHORS = {
+  1:'Processos essenciais com falhas recorrentes; não há padrão de execução definido; erros impactam clientes e outras UGBs com frequência. A área apaga incêndio, não entrega.',
+  2:'O básico existe, mas a execução é instável. Depende de quem está de plantão ou do contexto do dia. Ainda há lacunas visíveis e o resultado varia entre pessoas ou períodos.',
+  3:'Os processos essenciais funcionam com regularidade. A equipe sabe o que precisa fazer e entrega na maior parte das vezes, com exceções pontuais gerenciáveis.',
+  4:'Execução consistente e previsível. Exceções são tratadas rapidamente. A equipe opera com autonomia e alinhamento. Qualquer pessoa pode ser treinada nos processos e atividades de outra pessoa sem perda de padrão.',
+  5:'O básico está tão consolidado que a área opera com autonomia total e consistência independente de quem está presente. Os padrões são conhecidos, respeitados e executados sem necessidade de controle externo.',
+};
+
+// Universo oficial de UGBs por empresa (extraído dos indicadores da pesquisa) — usado para medir aderência
+const UGB_UNIVERSE = {
+  "sj": ["Apoio a clientes","Arquivo","Atendimento a Inquilino - Contratos","Atendimento a Inquilino - Imóveis","Concessionárias","Condomínio","Crédito e Contrato","Desocupação","Embalagem","Estoque","Gerência de Contas","IMDEX","IPTU","Locação SJ Morar","Locação SJ Negócios","Novos Clientes","Relacionamento","Seguro Incêndio","Vistoria"],
+  "readi": ["Cuido de Clientes","Cuido de Docs","Cuido de Finanças","Cuido de Licenças","Cuido de Precificação","Cuido de Produtos","Cuido de Regularização","Cuido de Tech"],
+  "adv": ["Administrativo","Assessoria Jurídica","Contencioso","Controladoria","Negociações"],
+  "vg": ["Contabilidade","Controladoria - VG","Coord. Receita e Distribuição","Cozinha","Departamento de Pessoal","Financeiro","Gente e Gestão","Gerência de Vendas","Governança","Grupos e Eventos","Manutenção","Marketing","Recepção","Reservas","Restaurante","Suprimentos","TI"],
+  "iua": ["Almoxarifado","Contabilidade","Controladoria - IU-Á","Cozinha","Eventos","Financeiro","Gente e Gestão","Gerência","Governança","Manutenção","Marketing","Recepção","Reservas","Restaurante","Setor Pessoal","T.I. IU-Á"],
+  "cadis": ["Contabilidade","Financeiro","Gente e Gestão","Gepa","Marketing","Secretária da Direção","Setor Pessoal","Tecnologia e Inovação"]
+};
 
 let session = null;      // {access_token, refresh_token, expires_at, email}
 let allRows = [];
@@ -225,6 +257,28 @@ let currentTab = 'dashboard';
 let expandedRows = new Set();
 
 const filterState = { empresa:new Set(), ugb:new Set(), nivel:new Set(), pessoa:'' };
+
+// ══════════════════════════════════════════
+// ADERÊNCIA
+// ══════════════════════════════════════════
+function computeAdherence(){
+  const empresasEscopo = filterState.empresa.size ? [...filterState.empresa] : Object.keys(UGB_UNIVERSE);
+  const respondidos = new Set(
+    allRows
+      .filter(r => empresasEscopo.includes(r.empresa))
+      .map(r => `${r.empresa}||${r.ugb}`)
+  );
+  const porEmpresa = empresasEscopo.map(emp => {
+    const universo = (UGB_UNIVERSE[emp]||[]);
+    const universoEscopo = filterState.ugb.size ? universo.filter(u=>filterState.ugb.has(u)) : universo;
+    const pendentes = universoEscopo.filter(u => !respondidos.has(`${emp}||${u}`));
+    const respondidasCount = universoEscopo.length - pendentes.length;
+    return { empresa: emp, total: universoEscopo.length, respondidas: respondidasCount, pendentes };
+  });
+  const totalUniverso = porEmpresa.reduce((s,e)=>s+e.total,0);
+  const totalRespondidas = porEmpresa.reduce((s,e)=>s+e.respondidas,0);
+  return { totalUniverso, totalRespondidas, porEmpresa };
+}
 
 // ══════════════════════════════════════════
 // AUTH
@@ -457,7 +511,9 @@ function switchTab(tab){
   renderCurrentTab();
 }
 function renderCurrentTab(){
-  if(currentTab==='dashboard') renderDashboard(); else renderDataset();
+  if(currentTab==='dashboard') renderDashboard();
+  else if(currentTab==='dataset') renderDataset();
+  else renderSessoes();
 }
 
 // ══════════════════════════════════════════
@@ -494,13 +550,22 @@ function barChart(rows, colorMap, opts={}){
 
 function renderDashboard(){
   const host = document.getElementById('tab-dashboard');
-  if(!filtered.length){
-    host.innerHTML = `<div class="card"><div class="empty-note">Nenhuma resposta encontrada para os filtros selecionados.</div></div>`;
+
+  const ader = computeAdherence();
+  const aderPct = ader.totalUniverso ? Math.round(ader.totalRespondidas/ader.totalUniverso*100) : 0;
+
+  if(!filtered.length && !ader.totalRespondidas){
+    host.innerHTML = `
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Aderência da pesquisa</div>
+        ${renderAderenciaBlock(ader, aderPct)}
+      </div>
+      <div class="card"><div class="empty-note">Nenhuma resposta registrada ainda para os filtros selecionados.</div></div>`;
     return;
   }
 
   const total = filtered.length;
-  const avgNivel = (filtered.reduce((s,r)=>s+(r.nivel_entrega||0),0)/total).toFixed(1);
+  const avgNivel = total ? (filtered.reduce((s,r)=>s+(r.nivel_entrega||0),0)/total).toFixed(1) : '—';
   const nEmpresas = new Set(filtered.map(r=>r.empresa)).size;
   const nUgbs = new Set(filtered.map(r=>r.ugb)).size;
 
@@ -517,11 +582,16 @@ function renderDashboard(){
   const focusUgb = host.dataset.focusUgb && ugbOptions.includes(host.dataset.focusUgb) ? host.dataset.focusUgb : (ugbOptions[0]||'');
 
   host.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Aderência da pesquisa <small>${ader.totalRespondidas} de ${ader.totalUniverso} UGBs já responderam</small></div>
+      ${renderAderenciaBlock(ader, aderPct)}
+    </div>
+
     <div class="kpi-row">
       <div class="kpi-card"><div class="kpi-num">${total}</div><div class="kpi-lbl">Respostas</div></div>
+      <div class="kpi-card"><div class="kpi-num">${aderPct}%</div><div class="kpi-lbl">Aderência (UGBs cobertas)</div></div>
       <div class="kpi-card"><div class="kpi-num">${avgNivel}</div><div class="kpi-lbl">Nível médio de entrega</div></div>
       <div class="kpi-card"><div class="kpi-num">${nEmpresas}</div><div class="kpi-lbl">Empresas participantes</div></div>
-      <div class="kpi-card"><div class="kpi-num">${nUgbs}</div><div class="kpi-lbl">UGBs / áreas participantes</div></div>
     </div>
 
     <div class="dash-grid">
@@ -566,6 +636,59 @@ function renderDashboard(){
     </div>
   `;
   if(focusUgb) renderUgbFocus(focusUgb);
+}
+
+function renderAderenciaBlock(ader, aderPct){
+  const barColor = aderPct>=80?'var(--green)':aderPct>=50?'var(--orange)':'var(--red)';
+
+  // ordena empresas pela aderência (mais crítica primeiro)
+  const ordenado = [...ader.porEmpresa].sort((a,b)=>{
+    const pctA = a.total? a.respondidas/a.total : 1;
+    const pctB = b.total? b.respondidas/b.total : 1;
+    return pctA - pctB;
+  });
+
+  const empresaRows = ordenado.map((e,i)=>{
+    const pct = e.total? Math.round(e.respondidas/e.total*100) : 100;
+    const cor = pct>=80?'var(--green)':pct>=50?'var(--orange)':'var(--red)';
+    const temPendentes = e.pendentes.length>0;
+    const rowId = `ader-emp-${e.empresa}`;
+    return `
+    <div class="ader-emp-row">
+      <div class="ader-emp-head" ${temPendentes?`onclick="toggleAderEmp('${rowId}')"`:''} style="${temPendentes?'cursor:pointer':''}">
+        <div class="ader-emp-name">
+          ${temPendentes?`<span class="ader-caret" id="${rowId}-caret">▸</span>`:'<span class="ader-caret" style="visibility:hidden">▸</span>'}
+          ${EMPRESA_NOMES[e.empresa]||e.empresa}
+        </div>
+        <div class="ader-emp-bar"><div class="bar-track" style="height:10px"><div class="bar-fill" style="width:${pct}%;background:${cor}"></div></div></div>
+        <div class="ader-emp-count" style="color:${cor}">${e.respondidas}/${e.total}</div>
+      </div>
+      ${temPendentes ? `
+      <div class="ader-emp-body" id="${rowId}">
+        <span class="ader-emp-body-lbl">Pendentes:</span> ${e.pendentes.join(', ')}
+      </div>` : `<div class="ader-emp-body open" style="color:var(--green);font-size:11.5px">Todas as UGBs já responderam 🎉</div>`}
+    </div>`;
+  }).join('');
+
+  return `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
+      <div style="font-size:32px;font-weight:700;color:${barColor};font-family:'IBM Plex Mono',monospace">${aderPct}%</div>
+      <div style="flex:1">
+        <div class="bar-track" style="height:14px">
+          <div class="bar-fill" style="width:${aderPct}%;background:${barColor}"></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">${ader.totalRespondidas} de ${ader.totalUniverso} UGBs (considerando os filtros de empresa/UGB atuais) já enviaram resposta</div>
+      </div>
+    </div>
+    <div class="ader-emp-list">${empresaRows}</div>
+  `;
+}
+
+function toggleAderEmp(rowId){
+  const body = document.getElementById(rowId);
+  const caret = document.getElementById(rowId+'-caret');
+  const open = body.classList.toggle('open');
+  if(caret) caret.textContent = open ? '▾' : '▸';
 }
 
 function setFocusUgb(ugb){
@@ -625,7 +748,7 @@ function renderDataset(){
   const host = document.getElementById('tab-dataset');
   host.innerHTML = `
     <div class="table-toolbar">
-      <div class="table-count">${filtered.length} de ${allRows.length} respostas</div>
+      <div class="table-count">Dataset completo — ${filtered.length} de ${allRows.length} respostas</div>
       <button class="btn-export" onclick="exportCSV()">↓ Exportar CSV</button>
     </div>
     <div class="tbl-wrap">
@@ -691,6 +814,66 @@ function exportCSV(){
   const a = document.createElement('a');
   a.href = url; a.download = `bbf_respostas_${new Date().toISOString().slice(0,10)}.csv`;
   a.click(); URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════
+// SESSÕES DE RESPOSTA (visão por sessão / Q&A)
+// ══════════════════════════════════════════
+function renderSessoes(){
+  const host = document.getElementById('tab-sessoes');
+  host.innerHTML = `
+    <div class="table-toolbar">
+      <div class="table-count">${filtered.length} sessão(ões) de resposta encontrada(s)</div>
+    </div>
+    <div id="sessoes-list" style="display:flex;flex-direction:column;gap:14px"></div>
+  `;
+  const list = document.getElementById('sessoes-list');
+  if(!filtered.length){
+    list.innerHTML = `<div class="card"><div class="empty-note">Nenhuma sessão de resposta para os filtros selecionados.</div></div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(r=>{
+    const info = NIVEL_INFO[r.nivel_entrega]||{label:'—',color:'#666',bg:'#eee'};
+    const medidas = toArrayField(r.dimensoes_medidas);
+    const lacunas = toArrayField(r.dimensoes_lacunas);
+    return `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:12px">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">${r.nome||'—'} <span style="font-weight:500;color:var(--muted);font-size:12px">· ${r.funcao||'—'}</span></div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:2px">${EMPRESA_NOMES[r.empresa]||r.empresa} · ${r.ugb||'—'} · ${fmtDate(r.created_at)}</div>
+        </div>
+        <span class="lvl-pill" style="color:${info.color};background:${info.bg}">${r.nivel_entrega||'—'} · ${info.label}</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Como esta UGB define "Básico Bem Feito"?</div>
+          <div style="font-size:12.5px;color:var(--text);line-height:1.55">${r.definicao_bbf||'—'}</div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Quais dimensões já são medidas?</div>
+          <ul style="padding-left:16px;font-size:12.5px;color:var(--text)">${medidas.map(d=>`<li>${d}</li>`).join('')||'<li>—</li>'}</ul>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Quais lacunas ainda existem?</div>
+          <ul style="padding-left:16px;font-size:12.5px;color:var(--text)">${lacunas.map(d=>`<li>${d}</li>`).join('')||'<li>—</li>'}</ul>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Nível de entrega selecionado</div>
+          <div style="font-size:12.5px;color:var(--text);line-height:1.55"><b style="color:${info.color}">${r.nivel_entrega} · ${info.label}</b> — ${NIVEL_ANCHORS[r.nivel_entrega]||''}</div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Justificativa do nível escolhido</div>
+          <div style="font-size:12.5px;color:var(--text);line-height:1.55">${r.justificativa||'—'}</div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">P: Análise crítica dos indicadores</div>
+          <div style="font-size:12.5px;color:var(--text);line-height:1.55">${r.analise_kpis||'—'}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 </script>
 </body>
