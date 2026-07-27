@@ -243,11 +243,11 @@ const NIVEL_ANCHORS = {
 // Universo oficial de UGBs por empresa (extraído dos indicadores da pesquisa) — usado para medir aderência
 const UGB_UNIVERSE = {
   "sj": ["Apoio a clientes","Arquivo","Atendimento a Inquilino - Contratos","Atendimento a Inquilino - Imóveis","Concessionárias","Condomínio","Crédito e Contrato","Desocupação","Embalagem","Estoque","Gerência de Contas","IMDEX","IPTU","Locação SJ Morar","Locação SJ Negócios","Novos Clientes","Relacionamento","Seguro Incêndio","Vistoria"],
-  "readi": ["Cuido de Clientes","Cuido de Docs","Cuido de Finanças","Cuido de Licenças","Cuido de Precificação","Cuido de Produtos","Cuido de Regularização","Cuido de Tech"],
+  "readi": ["Cuido de Clientes","Cuido de Docs","Cuido de Licenças","Cuido de Precificação","Cuido de Produtos","Cuido de Regularização","Cuido de Tech"],
   "adv": ["Administrativo","Assessoria Jurídica","Contencioso","Controladoria","Negociações"],
   "vg": ["Contabilidade","Controladoria - VG","Coord. Receita e Distribuição","Cozinha","Departamento de Pessoal","Financeiro","Gente e Gestão","Gerência de Vendas","Governança","Grupos e Eventos","Manutenção","Marketing","Recepção","Reservas","Restaurante","Suprimentos","TI"],
   "iua": ["Almoxarifado","Contabilidade","Controladoria - IU-Á","Cozinha","Eventos","Financeiro","Gente e Gestão","Gerência","Governança","Manutenção","Marketing","Recepção","Reservas","Restaurante","Setor Pessoal","T.I. IU-Á"],
-  "cadis": ["Contabilidade","Financeiro","Gente e Gestão","Gepa","Marketing","Secretária da Direção","Setor Pessoal","Tecnologia e Inovação"]
+  "cadis": ["Contabilidade","Financeiro","Gente e Gestão","Gepa","Marketing","Setor Pessoal","Tecnologia e Inovação"]
 };
 
 let session = null;      // {access_token, refresh_token, expires_at, email}
@@ -256,7 +256,7 @@ let filtered = [];
 let currentTab = 'dashboard';
 let expandedRows = new Set();
 
-const filterState = { empresa:new Set(), ugb:new Set(), nivel:new Set(), pessoa:'' };
+const filterState = { empresa:new Set(), ugb:new Set(), nivel:new Set(), pessoa:new Set() };
 
 // ══════════════════════════════════════════
 // ADERÊNCIA
@@ -445,8 +445,16 @@ function buildFilters(){
       </div>
     </div>
     <div class="filter-item">
-      <div class="filter-lbl">Pessoa</div>
-      <input class="filter-text" id="filter-pessoa" placeholder="Buscar por nome…" oninput="setPessoa(this.value)">
+      <div class="filter-lbl">Respondente</div>
+      <div class="filter-sel">
+        <button class="filter-btn" onclick="toggleMenu('menu-pessoa')">
+          <span id="lbl-pessoa">Todos</span>
+          <span class="filter-count" id="cnt-pessoa" style="display:none"></span>
+        </button>
+        <div class="filter-menu" id="menu-pessoa">
+          ${uniqueSorted(allRows.map(r=>r.nome)).map(n=>`<label class="filter-opt"><input type="checkbox" value="${n}" onchange="toggleFilter('pessoa','${n.replace(/'/g,"\\'")}',this.checked)"> ${n}</label>`).join('') || '<div class="empty-note">Sem respondentes.</div>'}
+        </div>
+      </div>
     </div>
     <button class="btn-clear" onclick="clearFilters()">Limpar filtros</button>
   `;
@@ -469,23 +477,21 @@ function toggleFilter(kind, value, checked){
   if(checked) set.add(value); else set.delete(value);
   updateFilterLabel(kind);
   applyFilters();
+  if(kind==='pessoa' && checked && set.size===1) switchTab('sessoes');
 }
 
 function updateFilterLabel(kind){
   const set = filterState[kind];
   const lblEl = document.getElementById('lbl-'+kind);
   const cntEl = document.getElementById('cnt-'+kind);
-  if(set.size===0){ lblEl.textContent = kind==='nivel'?'Todos':'Todas'; cntEl.style.display='none'; }
-  else{ lblEl.textContent = 'Selecionado(s)'; cntEl.style.display='inline-block'; cntEl.textContent = set.size; }
+  if(set.size===0){ lblEl.textContent = kind==='nivel'?'Todos':(kind==='pessoa'?'Todos':'Todas'); cntEl.style.display='none'; }
+  else{ lblEl.textContent = kind==='pessoa' && set.size===1 ? [...set][0] : 'Selecionado(s)'; cntEl.style.display='inline-block'; cntEl.textContent = set.size; }
 }
 
-function setPessoa(val){ filterState.pessoa = val.trim().toLowerCase(); applyFilters(); }
-
 function clearFilters(){
-  filterState.empresa.clear(); filterState.ugb.clear(); filterState.nivel.clear(); filterState.pessoa='';
+  filterState.empresa.clear(); filterState.ugb.clear(); filterState.nivel.clear(); filterState.pessoa.clear();
   document.querySelectorAll('.filter-menu input[type=checkbox]').forEach(c=>c.checked=false);
-  document.getElementById('filter-pessoa').value='';
-  ['empresa','ugb','nivel'].forEach(updateFilterLabel);
+  ['empresa','ugb','nivel','pessoa'].forEach(updateFilterLabel);
   applyFilters();
 }
 
@@ -494,7 +500,7 @@ function applyFilters(){
     if(filterState.empresa.size && !filterState.empresa.has(r.empresa)) return false;
     if(filterState.ugb.size && !filterState.ugb.has(r.ugb)) return false;
     if(filterState.nivel.size && !filterState.nivel.has(String(r.nivel_entrega))) return false;
-    if(filterState.pessoa && !(r.nome||'').toLowerCase().includes(filterState.pessoa)) return false;
+    if(filterState.pessoa.size && !filterState.pessoa.has(r.nome)) return false;
     return true;
   });
   renderCurrentTab();
