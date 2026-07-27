@@ -459,7 +459,7 @@ td.mc{ text-align:center; padding:8px 4px; }
             <div class="co-cards">
               <div class="co-card" data-co="sj" onclick="selectCompany('sj')">
                 <div class="co-card-logo">SJ</div>
-                <div class="co-card-name">Empresas SJ</div>
+                <div class="co-card-name">SJ Imóveis</div>
                 <div class="co-card-desc">Locação e gestão<br>imobiliária</div>
               </div>
               <div class="co-card" data-co="readi" onclick="selectCompany('readi')">
@@ -653,7 +653,7 @@ function activateCompany(id) {
   ACTIVE_DATA = ACTIVE_DATA_MAP[id] || DATA;
   UGB_LIST = [...new Set(ACTIVE_DATA.map(d => d.ugb).filter(Boolean))].sort();
   const sub = document.querySelector('.hdr-sub');
-  const names = { sj: 'Empresas SJ', readi: 'READI', adv: 'SJ Advogados', vg: 'Verdegreen', iua: 'iu-á Hotel', cadis: 'CADIS 3' };
+  const names = { sj: 'SJ Imóveis', readi: 'READI', adv: 'SJ Advogados', vg: 'Verdegreen', iua: 'iu-á Hotel', cadis: 'CADIS 3' };
   if (sub) sub.textContent = (names[id] || 'Empresas SJ') + ' · 1º Semestre 2026';
 }
 
